@@ -1,0 +1,63 @@
+{
+  "projectType": "general",
+  "projectName": "MenuBarText",
+  "projectDescription": "A lightweight macOS app that displays customizable text in your menu bar when hidden",
+  "theme": "palm",
+  "primaryColor": "#FFC107",
+  "lightColor": "#FFD54F",
+  "darkColor": "#FFA000",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "User Guide",
+        "pages": [
+          "user-guide/basic-usage",
+          "user-guide/customization",
+          "user-guide/position-adjustment",
+          "user-guide/troubleshooting"
+        ]
+      },
+      {
+        "group": "Technical Reference",
+        "pages": [
+          "reference/architecture",
+          "reference/file-storage",
+          "reference/system-integration"
+        ]
+      },
+      {
+        "group": "Development",
+        "pages": [
+          "development/building-from-source",
+          "development/contributing",
+          "development/changelog"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Custom text display in menu bar overlay",
+    "Four color options (Yellow, White, Red, Green)",
+    "Adjustable text positioning",
+    "Auto-start on login with LaunchAgent",
+    "Lightweight dual-app architecture",
+    "File-based real-time updates"
+  ],
+  "publicApiSurface": [
+    "MenuBarTextOverlay.app - Main overlay display application",
+    "MenuBarTextController.app - Menu bar controller interface",
+    "~/.menubartext_content - Text content storage file",
+    "~/.menubartext_position - Position storage file (JSON: {x, y})",
+    "~/.menubartext_color - Color preference storage file",
+    "install.sh - Installation script",
+    "uninstall.sh - Uninstallation script"
+  ]
+}
