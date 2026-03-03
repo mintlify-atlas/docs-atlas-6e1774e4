@@ -1,0 +1,286 @@
+---
+title: Contributing
+description: Guidelines for contributing to MenuBarText development
+---
+
+Thank you for your interest in contributing to MenuBarText! This guide will help you get started with contributing to the project.
+
+## Getting started
+
+### Prerequisites
+
+Before you begin, make sure you have:
+
+- macOS 13.0 or later
+- Xcode Command Line Tools installed
+- Basic knowledge of Swift and Cocoa frameworks
+- Git installed and configured
+
+### Development setup
+
+<Steps>
+  <Step title="Fork the repository">
+    Fork the MenuBarText repository on GitHub to your own account.
+  </Step>
+  
+  <Step title="Clone your fork">
+    ```bash
+    git clone https://github.com/yourusername/MenuBarText.git
+    cd MenuBarText
+    ```
+  </Step>
+  
+  <Step title="Test the installation">
+    Verify everything works by running the installation script:
+    
+    ```bash
+    ./install.sh
+    ```
+    
+    Check that the menu bar icon appears and all functionality works correctly.
+  </Step>
+</Steps>
+
+## Project structure
+
+Understanding the project structure will help you navigate the codebase:
+
+```
+MenuBarText/
+├── src/
+│   ├── menubar_text.swift           # Main overlay app
+│   └── menubar_text_controller.swift # Menu bar controller
+├── install.sh                        # Installation script
+├── uninstall.sh                      # Uninstallation script
+├── README.md                         # Project documentation
+└── LICENSE                           # MIT License
+```
+
+### Key components
+
+- **menubar_text.swift**: The overlay application that displays text in the menu bar area
+- **menubar_text_controller.swift**: The controller application that provides the menu bar interface
+- **install.sh**: Builds both apps from source and sets up auto-start
+- **uninstall.sh**: Removes all installed components and optionally deletes user settings
+
+## How to contribute
+
+### Reporting bugs
+
+Found a bug? Help us fix it by providing detailed information:
+
+<Steps>
+  <Step title="Check existing issues">
+    Search existing GitHub issues to avoid duplicates.
+  </Step>
+  
+  <Step title="Create a detailed bug report">
+    Include the following information:
+    
+    - **macOS version**: Your operating system version
+    - **Steps to reproduce**: Exact steps to trigger the bug
+    - **Expected behavior**: What should happen
+    - **Actual behavior**: What actually happens
+    - **Screenshots**: If applicable, add screenshots to help explain
+  </Step>
+</Steps>
+
+### Suggesting features
+
+Have an idea for a new feature?
+
+<Steps>
+  <Step title="Open an issue">
+    Create a GitHub issue with the "enhancement" label.
+  </Step>
+  
+  <Step title="Describe the feature">
+    Provide:
+    
+    - Clear description of the feature
+    - Benefits and use cases
+    - Implementation considerations
+    - Potential complexity or challenges
+  </Step>
+</Steps>
+
+### Code contributions
+
+#### Before you start
+
+<Note>
+  For major changes, please open an issue first to discuss what you would like to change. This helps ensure your time is well-spent and the changes align with the project's direction.
+</Note>
+
+- Check existing issues and pull requests
+- Discuss major changes in an issue before implementing
+- Follow the existing code style and conventions
+
+#### Making changes
+
+<Steps>
+  <Step title="Create a feature branch">
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+    
+    Use descriptive branch names:
+    - `feature/` for new features
+    - `fix/` for bug fixes
+    - `docs/` for documentation changes
+  </Step>
+  
+  <Step title="Make your changes">
+    Write clean, well-documented code that follows the project's style guidelines.
+  </Step>
+  
+  <Step title="Test thoroughly">
+    Test your changes extensively:
+    
+    ```bash
+    # Test installation
+    ./install.sh
+    
+    # Test all functionality:
+    # - Menu bar icon appears
+    # - Text setting works
+    # - Color changes apply
+    # - Position adjustment works
+    # - Auto-start functions
+    
+    # Test cleanup
+    ./uninstall.sh
+    ```
+  </Step>
+  
+  <Step title="Commit your changes">
+    Write clear, descriptive commit messages:
+    
+    ```bash
+    git commit -m "Add: new color option for better visibility"
+    ```
+    
+    Commit message prefixes:
+    - `Add:` for new features
+    - `Fix:` for bug fixes
+    - `Update:` for improvements to existing features
+    - `Docs:` for documentation changes
+  </Step>
+</Steps>
+
+#### Pull request process
+
+<Steps>
+  <Step title="Update documentation">
+    If your changes affect user-facing functionality, update the relevant documentation.
+  </Step>
+  
+  <Step title="Update CHANGELOG.md">
+    Add your changes to the CHANGELOG.md file under the "Unreleased" section.
+  </Step>
+  
+  <Step title="Ensure tests pass">
+    Verify all manual tests pass before creating the pull request.
+  </Step>
+  
+  <Step title="Create pull request">
+    Open a pull request with:
+    
+    - **Clear title**: Summarize the changes
+    - **Detailed description**: Explain what and why
+    - **Related issues**: Reference any related issue numbers
+    - **Screenshots**: For UI changes, include before/after screenshots
+  </Step>
+</Steps>
+
+## Code style guidelines
+
+### Swift code conventions
+
+- Use 4 spaces for indentation (no tabs)
+- Follow Swift naming conventions (camelCase for variables/functions, PascalCase for types)
+- Add comments for complex logic or non-obvious decisions
+- Keep functions focused and small (single responsibility)
+- Use meaningful variable and function names
+
+### File organization
+
+- Keep all Swift source files in the `src/` directory
+- Use descriptive file names that reflect their purpose
+- Separate concerns appropriately (overlay vs controller)
+
+## Testing
+
+### Manual testing checklist
+
+Before submitting a pull request, verify:
+
+- [ ] App installs correctly via `install.sh`
+- [ ] Menu bar icon appears in the correct location
+- [ ] Quote setting dialog works and persists text
+- [ ] Color changes apply immediately
+- [ ] Position adjustment controls work correctly
+- [ ] Auto-start functions after system restart
+- [ ] Uninstall script cleans up all components
+- [ ] No errors in Console.app during normal operation
+
+### Testing on different configurations
+
+Test your changes across different setups:
+
+- Different macOS versions (13.0+)
+- Various screen resolutions
+- Multiple monitor setups
+- Different menu bar configurations (auto-hide, always visible)
+
+## Documentation
+
+### README updates
+
+When updating README.md:
+
+- Keep installation instructions current and accurate
+- Update feature lists when adding new capabilities
+- Maintain screenshot accuracy (update if UI changes)
+- Use clear, concise language
+
+### Code documentation
+
+- Comment complex algorithms and non-obvious code
+- Document public interfaces and function parameters
+- Explain architectural decisions in comments
+- Use Swift documentation comments for public APIs
+
+## Community guidelines
+
+### Be respectful
+
+- Use inclusive and welcoming language
+- Be constructive and helpful in feedback
+- Help newcomers get started with the project
+- Respect different viewpoints and experiences
+
+### Communication
+
+- Use GitHub issues for bug reports and feature requests
+- Be clear and concise in your communication
+- Provide context and examples when discussing ideas
+- Respond promptly to feedback on your contributions
+
+## Recognition
+
+Contributors will be acknowledged in:
+
+- README.md contributors section
+- Release notes for the version containing their contributions
+- Special thanks for significant or ongoing contributions
+
+## Questions?
+
+Need help or have questions?
+
+- Open an issue for questions about the project
+- Start a GitHub discussion for ideas or general topics
+- Reach out to maintainers for guidance
+
+Thank you for making MenuBarText better!

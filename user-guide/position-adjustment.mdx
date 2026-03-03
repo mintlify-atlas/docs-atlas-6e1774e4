@@ -1,0 +1,334 @@
+---
+title: Position adjustment
+description: Fine-tune the exact position of your MenuBarText with pixel-perfect precision
+---
+
+MenuBarText allows you to position your text anywhere within the menu bar area using the built-in adjustment panel.
+
+## Opening the adjustment panel
+
+The adjustment panel provides a dedicated window with arrow controls for precise positioning:
+
+<Steps>
+  <Step title="Access the panel">
+    Click the quote bubble icon → **"Open Adjustment Panel"** (⌘A)
+  </Step>
+  
+  <Step title="Adjustment window appears">
+    A small window (300×120px) appears titled "Position Adjustment" with directional controls.
+  </Step>
+  
+  <Step title="Panel stays open">
+    The panel remains open for multiple adjustments. Click "Close" when finished.
+  </Step>
+</Steps>
+
+<Info>
+If you open the adjustment panel again while it's already open, MenuBarText will bring the existing window to the front instead of creating a duplicate.
+</Info>
+
+## Adjustment panel controls
+
+The adjustment panel contains six controls organized for intuitive positioning:
+
+### Position controls
+
+<CardGroup cols={2}>
+  <Card title="← Left" icon="arrow-left">
+    Moves text **10 pixels left**
+    
+    Each click decreases the X coordinate by 10.
+  </Card>
+  
+  <Card title="Right →" icon="arrow-right">
+    Moves text **10 pixels right**
+    
+    Each click increases the X coordinate by 10.
+  </Card>
+  
+  <Card title="↑ Up" icon="arrow-up">
+    Moves text **2 pixels up**
+    
+    Each click decreases the Y coordinate by 2.
+  </Card>
+  
+  <Card title="Down ↓" icon="arrow-down">
+    Moves text **2 pixels down**
+    
+    Each click increases the Y coordinate by 2.
+  </Card>
+</CardGroup>
+
+<Note>
+Notice that horizontal movement (10px) is faster than vertical movement (2px). This is intentional, as the menu bar area is wider than it is tall.
+</Note>
+
+### Reset and close controls
+
+- **Reset Position**: Returns text to the default position (X=20, Y=5)
+- **Close**: Closes the adjustment panel
+
+## Understanding the coordinate system
+
+MenuBarText uses a coordinate system based on the macOS screen:
+
+```
+(0,0) ← Top-left corner of screen
+  ↓
+  → X increases to the right
+  ↓ Y increases downward
+```
+
+### Coordinate ranges
+
+- **X coordinate**: Minimum of 0 (left edge), no maximum (can go across full screen width)
+- **Y coordinate**: Range of -10 to 20 (constrained to menu bar area)
+
+From the source code:
+
+```swift
+func adjustPosition(_ deltaX: Int, _ deltaY: Int) {
+    let currentPos = loadPosition()
+    let newX = max(0, currentPos.x + deltaX)
+    let newY = max(-10, min(20, currentPos.y + deltaY))
+    savePosition(newX, newY)
+}
+```
+
+From `menubar_text_controller.swift:250-255`
+
+<Warning>
+The Y coordinate is clamped between -10 and 20 to prevent the text from moving outside the menu bar area.
+</Warning>
+
+## Step-by-step positioning guide
+
+Follow this workflow for optimal text positioning:
+
+<Steps>
+  <Step title="Start with default position">
+    If you're not happy with your current position, click **"Reset Position"** to return to the default (X=20, Y=5). This gives you a known starting point.
+  </Step>
+  
+  <Step title="Adjust horizontal position">
+    Use **"← Left"** and **"Right →"** to move your text left or right across the menu bar. Each click moves 10 pixels, allowing for quick repositioning.
+  </Step>
+  
+  <Step title="Fine-tune vertical position">
+    Use **"↑ Up"** and **"Down ↓"** to adjust the vertical position. Each click moves just 2 pixels for precise alignment within the menu bar height.
+  </Step>
+  
+  <Step title="Check visibility">
+    Hide and show your menu bar to verify the text appears in the right spot when the menu bar is hidden.
+  </Step>
+  
+  <Step title="Close the panel">
+    Click **"Close"** when you're satisfied with the position.
+  </Step>
+</Steps>
+
+## Position persistence
+
+Your position settings are automatically saved and persist across sessions:
+
+### Storage location
+
+Position data is stored in: `~/.menubartext_position`
+
+### File format
+
+The position is saved as JSON:
+
+```json
+{"x":20,"y":5}
+```
+
+Here's how the controller saves position data:
+
+```swift
+func savePosition(_ x: Int, _ y: Int) {
+    let posFilePath = NSHomeDirectory() + "/.menubartext_position"
+    let posData = ["x": x, "y": y]
+    if let jsonData = try? JSONSerialization.data(withJSONObject: posData),
+       let jsonString = String(data: jsonData, encoding: .utf8) {
+        try? jsonString.write(toFile: posFilePath, atomically: true, encoding: .utf8)
+    }
+}
+```
+
+From `menubar_text_controller.swift:268-275`
+
+### Loading saved position
+
+When the app starts, it loads your saved position:
+
+```swift
+func loadPosition() -> (x: Int, y: Int) {
+    let posFilePath = NSHomeDirectory() + "/.menubartext_position"
+    if let posData = try? String(contentsOfFile: posFilePath, encoding: .utf8),
+       let data = posData.data(using: .utf8),
+       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Int],
+       let x = json["x"], let y = json["y"] {
+        return (x, y)
+    }
+    return (20, 5) // Default position
+}
+```
+
+From `menubar_text_controller.swift:257-266`
+
+<Tip>
+If the position file doesn't exist or can't be read, MenuBarText automatically uses the default position (20, 5).
+</Tip>
+
+## Common positioning scenarios
+
+### Left-aligned (default)
+
+**Position**: X=20, Y=5  
+**Use case**: Reading text naturally from left to right  
+**How to set**: Click "Reset Position"
+
+### Center-aligned
+
+**Position**: Varies by screen width (e.g., X=600-700 for 1440px screens)  
+**Use case**: Centered attention, symmetrical layout  
+**How to set**: Use "Right →" repeatedly until centered
+
+### Right-aligned
+
+**Position**: X=1200+ (depends on text length and screen width)  
+**Use case**: Keep text near other menu bar icons  
+**How to set**: Use "Right →" repeatedly until near the right edge
+
+### Top of menu bar
+
+**Position**: Y=-10 to 0  
+**Use case**: Maximum visibility, top-most position  
+**How to set**: Use "↑ Up" repeatedly
+
+### Bottom of menu bar
+
+**Position**: Y=15 to 20  
+**Use case**: Text near the bottom edge of menu bar  
+**How to set**: Use "Down ↓" repeatedly
+
+## Manual position editing
+
+<Warning>
+Advanced users only: Manual editing can result in text appearing off-screen if coordinates are invalid.
+</Warning>
+
+You can manually edit the position file if needed:
+
+```bash
+# Create custom position
+echo '{"x":100,"y":10}' > ~/.menubartext_position
+
+# Reset to default
+echo '{"x":20,"y":5}' > ~/.menubartext_position
+```
+
+Restart the overlay for changes to take effect.
+
+## Movement increments explained
+
+### Why different speeds?
+
+The horizontal and vertical movement speeds are different by design:
+
+| Direction | Pixels per click | Reasoning |
+|-----------|-----------------|------------|
+| Horizontal (Left/Right) | 10 pixels | Screens are wide; faster movement helps cross the menu bar quickly |
+| Vertical (Up/Down) | 2 pixels | Menu bar height is limited (~22-25px); slower movement allows precision |
+
+This creates an intuitive balance between speed and precision.
+
+### Fine-tuning with multiple clicks
+
+For precise positioning:
+
+- **Rough positioning**: Use Left/Right to get in the general area
+- **Fine-tuning**: Use Up/Down for pixel-perfect vertical alignment
+- **Minor horizontal adjustments**: Click Left/Right once or twice
+
+## Boundary protection
+
+MenuBarText prevents your text from going off-screen:
+
+### X-axis (horizontal)
+
+```swift
+let newX = max(0, currentPos.x + deltaX)
+```
+
+Minimum X value is 0 (left edge). There's no maximum, allowing text to extend across ultra-wide monitors.
+
+### Y-axis (vertical)
+
+```swift
+let newY = max(-10, min(20, currentPos.y + deltaY))
+```
+
+Y is clamped between -10 and 20, keeping text within the menu bar area.
+
+<Info>
+If you reach a boundary, clicking the arrow button will have no effect until you move in the opposite direction.
+</Info>
+
+## Troubleshooting position issues
+
+<AccordionGroup>
+  <Accordion title="Text is not moving when I click arrows">
+    **Possible causes:**
+    - You've hit a boundary (X=0 for left, Y=-10 for top, Y=20 for bottom)
+    - The overlay is not running (check with menu bar icon status)
+    
+    **Solution:**
+    - Try moving in the opposite direction
+    - Click "Reset Position" to return to default
+    - Ensure overlay is running (Start Text if needed)
+  </Accordion>
+  
+  <Accordion title="Text disappeared after adjusting position">
+    **Possible causes:**
+    - Text moved too far to the right (off-screen)
+    - Menu bar is currently visible (text only shows when menu bar is hidden)
+    
+    **Solution:**
+    - Click "Reset Position" to return to visible area
+    - Hide your menu bar to see the text
+    - Use "← Left" repeatedly to bring text back from the right
+  </Accordion>
+  
+  <Accordion title="Position resets after restarting">
+    **Possible causes:**
+    - Position file is not writable
+    - File permissions issue
+    
+    **Solution:**
+    - Check file permissions: `ls -la ~/.menubartext_position`
+    - Ensure file is writable: `chmod 644 ~/.menubartext_position`
+    - Delete file and let app recreate it: `rm ~/.menubartext_position`
+  </Accordion>
+</AccordionGroup>
+
+## Best practices
+
+1. **Start with reset**: Always begin adjustments from the default position
+2. **Hide menu bar to test**: Check how your text looks with the menu bar hidden
+3. **Consider text length**: Longer text needs more horizontal space
+4. **Account for other icons**: Leave room for other menu bar items when they appear
+5. **Test multiple scenarios**: Check position with different apps open
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Customization" icon="palette" href="/user-guide/customization">
+    Learn how to change colors and text content
+  </Card>
+  
+  <Card title="Troubleshooting" icon="wrench" href="/user-guide/troubleshooting">
+    Get help with common issues
+  </Card>
+</CardGroup>

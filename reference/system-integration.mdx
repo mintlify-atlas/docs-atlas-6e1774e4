@@ -1,0 +1,438 @@
+---
+title: System integration
+description: How MenuBarText integrates with macOS, including LaunchAgent configuration, window management, and system requirements
+---
+
+MenuBarText integrates deeply with macOS to provide a seamless experience. This page documents the system-level integration points, permissions, and platform requirements.
+
+## macOS requirements
+
+<CardGroup cols={2}>
+  <Card title="Minimum version" icon="apple">
+    macOS 13.0 (Ventura)
+  </Card>
+  <Card title="Architecture" icon="microchip">
+    Universal (Intel & Apple Silicon)
+  </Card>
+</CardGroup>
+
+### Version check
+
+The installation script verifies macOS version compatibility:
+
+```bash
+# From install.sh:6-10
+if [[ $(sw_vers -productVersion | cut -d. -f1) -lt 13 ]]; then
+    echo "❌ Error: macOS 13.0 or later required"
+    exit 1
+fi
+```
+
+<Warning>
+MenuBarText requires macOS 13.0 or later because it uses modern Swift and Cocoa APIs not available in earlier versions.
+</Warning>
+
+## LaunchAgent integration
+
+MenuBarText uses macOS LaunchAgent to start automatically on login. This is the recommended Apple-approved method for user-level background processes.
+
+### Launch agent configuration
+
+**Location:** `~/Library/LaunchAgents/com.menubartext.controller.plist`
+
+**Full configuration:**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.menubartext.controller</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Applications/MenuBarTextController.app/Contents/MacOS/MenuBarTextController</string>
+    </array>
+    
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <key>KeepAlive</key>
+    <true/>
+    
+    <key>ProcessType</key>
+    <string>Interactive</string>
+</dict>
+</plist>
+```
+
+### Key properties explained
+
+<Accordion title="Label">
+  **Value:** `com.menubartext.controller`
+  
+  Unique identifier for the launch agent. Used by `launchctl` commands to reference this specific service.
+</Accordion>
+
+<Accordion title="ProgramArguments">
+  **Value:** Path to the controller binary
+  
+  Specifies the exact executable to launch. Must point to the binary inside the app bundle, not the `.app` directory itself.
+</Accordion>
+
+<Accordion title="RunAtLoad">
+  **Value:** `true`
+  
+  Launches the controller automatically when the user logs in. This is what enables the "auto-start on login" feature.
+</Accordion>
+
+<Accordion title="KeepAlive">
+  **Value:** `true`
+  
+  Automatically restarts the controller if it crashes or exits unexpectedly. Ensures reliability without user intervention.
+</Accordion>
+
+<Accordion title="ProcessType">
+  **Value:** `Interactive`
+  
+  Declares this as an interactive process that can display UI elements (menu bar icon, dialogs). Required for GUI applications.
+</Accordion>
+
+### LaunchAgent management
+
+The installation script handles launch agent setup:
+
+```bash
+# From install.sh:79-106
+CONTROLLER_PATH="/Applications/MenuBarTextController.app"
+CONTROLLER_PLIST="$HOME/Library/LaunchAgents/com.menubartext.controller.plist"
+
+# Create plist file
+cat > "$CONTROLLER_PLIST" << EOF
+# ... (plist content)
+EOF
+
+# Unload existing agent (if any)
+launchctl unload "$CONTROLLER_PLIST" 2>/dev/null
+
+# Load new agent
+launchctl load "$CONTROLLER_PLIST"
+```
+
+### Manual LaunchAgent commands
+
+<Tabs>
+  <Tab title="Load (enable)">
+    ```bash
+    launchctl load ~/Library/LaunchAgents/com.menubartext.controller.plist
+    ```
+    Enables the launch agent and starts the controller immediately.
+  </Tab>
+  
+  <Tab title="Unload (disable)">
+    ```bash
+    launchctl unload ~/Library/LaunchAgents/com.menubartext.controller.plist
+    ```
+    Disables auto-start and stops the controller.
+  </Tab>
+  
+  <Tab title="Check status">
+    ```bash
+    launchctl list | grep menubartext
+    ```
+    Shows if the launch agent is currently loaded.
+  </Tab>
+</Tabs>
+
+<Info>
+Changes to the plist file require unloading and reloading the launch agent to take effect.
+</Info>
+
+## Window management
+
+MenuBarText uses advanced window management techniques to create a non-intrusive overlay.
+
+### Overlay window properties
+
+The overlay window is configured with specific properties for seamless integration:
+
+```swift
+// From menubar_text.swift:13-22
+window = NSWindow(
+    contentRect: NSRect(x: 0, y: screen.frame.height - menuBarHeight, 
+                       width: screen.frame.width, height: menuBarHeight),
+    styleMask: [.borderless], 
+    backing: .buffered, 
+    defer: false
+)
+
+window.isOpaque = false
+window.backgroundColor = .clear
+window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.maximumWindow)))
+window.ignoresMouseEvents = true
+window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+```
+
+### Window configuration breakdown
+
+| Property | Value | Purpose |
+|----------|-------|---------|
+| `styleMask` | `.borderless` | No title bar or window controls |
+| `isOpaque` | `false` | Allows transparency |
+| `backgroundColor` | `.clear` | Invisible window background |
+| `level` | `.maximumWindow` | Always on top of other windows |
+| `ignoresMouseEvents` | `true` | Click-through, doesn't intercept clicks |
+| `collectionBehavior` | `.canJoinAllSpaces, .stationary` | Appears on all desktops, doesn't move |
+
+<Note>
+The `.maximumWindow` level ensures the text appears above all regular application windows but below system dialogs.
+</Note>
+
+### Space and mission control behavior
+
+The `.canJoinAllSpaces` behavior means:
+- Text appears on every virtual desktop (Space)
+- Persists across full-screen apps
+- Visible during Mission Control
+- Shown on all external displays
+
+```swift
+// From menubar_text.swift:22
+window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+```
+
+### Menu bar height calculation
+
+The window positions itself precisely within the menu bar area:
+
+```swift
+// From menubar_text.swift:10-14
+guard let screen = NSScreen.main else { return }
+let menuBarHeight = NSStatusBar.system.thickness
+
+window = NSWindow(
+    contentRect: NSRect(x: 0, 
+                       y: screen.frame.height - menuBarHeight,
+                       width: screen.frame.width, 
+                       height: menuBarHeight),
+    // ...
+)
+```
+
+<Tip>
+Using `NSStatusBar.system.thickness` ensures the overlay adapts to different menu bar sizes across macOS versions and display scaling settings.
+</Tip>
+
+## Process management
+
+### Application bundles
+
+Both apps are packaged as standard macOS application bundles with specific Info.plist configurations.
+
+#### Bundle identifiers
+
+| Application | Bundle Identifier |
+|-------------|-------------------|
+| Overlay | `com.menubartext.overlay` |
+| Controller | `com.menubartext.controller` |
+
+#### LSUIElement configuration
+
+Both apps use `LSUIElement` to hide from the Dock:
+
+```xml
+<!-- From install.sh:36-37 and 65-66 -->
+<key>LSUIElement</key>
+<true/>
+```
+
+**Effects of `LSUIElement`:**
+- No Dock icon
+- No window menu in menu bar
+- Doesn't appear in Cmd+Tab app switcher
+- Can still show menu bar status items
+- Can display dialogs and windows
+
+<Warning>
+Without `LSUIElement`, both apps would show Dock icons and clutter the application switcher, defeating the purpose of a lightweight menu bar utility.
+</Warning>
+
+### Process monitoring
+
+The controller monitors whether the overlay is running:
+
+```swift
+// From menubar_text_controller.swift:286-298
+func checkTextOverlayStatus() {
+    let task = Process()
+    task.launchPath = "/usr/bin/pgrep"
+    task.arguments = ["-f", "MenuBarTextOverlay"]
+    
+    let pipe = Pipe()
+    task.standardOutput = pipe
+    task.launch()
+    task.waitUntilExit()
+    
+    isTextOverlayRunning = task.terminationStatus == 0
+    updateMenuItems()
+}
+```
+
+This allows the controller to:
+- Enable/disable "Start" and "Stop" menu items appropriately
+- Show visual feedback in the menu bar icon
+- Prevent multiple overlay instances
+
+### Starting the overlay
+
+```swift
+// From menubar_text_controller.swift:49-78
+@objc func startTextOverlay() {
+    let possiblePaths = [
+        "/Applications/MenuBarTextOverlay.app",
+        "\(NSHomeDirectory())/Desktop/Code/MenuBarText/MenuBarTextOverlay.app",
+        "\(FileManager.default.currentDirectoryPath)/MenuBarTextOverlay.app"
+    ]
+    
+    var appPath: String?
+    for path in possiblePaths {
+        if FileManager.default.fileExists(atPath: path) {
+            appPath = path
+            break
+        }
+    }
+    
+    guard let validPath = appPath else {
+        print("Could not find MenuBarTextOverlay.app")
+        return
+    }
+    
+    let task = Process()
+    task.launchPath = "/usr/bin/open"
+    task.arguments = [validPath]
+    task.launch()
+}
+```
+
+<Info>
+The controller checks multiple paths to accommodate different installation locations, though `/Applications/` is the standard location.
+</Info>
+
+### Stopping the overlay
+
+```swift
+// From menubar_text_controller.swift:80-89
+@objc func stopTextOverlay() {
+    let task = Process()
+    task.launchPath = "/usr/bin/pkill"
+    task.arguments = ["-f", "MenuBarTextOverlay"]
+    task.launch()
+}
+```
+
+## System permissions
+
+MenuBarText requires minimal system permissions:
+
+<Steps>
+  <Step title="Screen recording (not required)">
+    **Not needed.** The overlay doesn't capture screen content.
+  </Step>
+  
+  <Step title="Accessibility (not required)">
+    **Not needed.** The app doesn't monitor input or control other apps.
+  </Step>
+  
+  <Step title="Full disk access (not required)">
+    **Not needed.** Only accesses configuration files in the user's home directory.
+  </Step>
+</Steps>
+
+<Tip>
+MenuBarText is permission-free! It only reads/writes its own configuration files, which don't require special permissions.
+</Tip>
+
+## Menu bar auto-hide requirement
+
+MenuBarText is designed specifically for use with macOS's menu bar auto-hide feature.
+
+### Enabling auto-hide
+
+<Steps>
+  <Step title="Open System Settings">
+    Click the Apple menu → **System Settings**
+  </Step>
+  
+  <Step title="Navigate to Desktop & Dock">
+    Find **Desktop & Dock** in the sidebar
+  </Step>
+  
+  <Step title="Enable auto-hide">
+    Toggle **Automatically hide and show the menu bar** to **on**
+  </Step>
+</Steps>
+
+### Why auto-hide is required
+
+| Menu Bar State | MenuBarText Visibility |
+|----------------|------------------------|
+| Hidden | ✅ Text visible in menu bar area |
+| Shown | ❌ Text covered by menu bar |
+
+<Note>
+When you move your cursor to the top of the screen, the menu bar appears and temporarily covers the text overlay. This is normal behavior.
+</Note>
+
+## Uninstallation
+
+Complete system integration cleanup:
+
+```bash
+# From uninstall.sh:7-19
+# Stop and remove launch agent
+launchctl unload ~/Library/LaunchAgents/com.menubartext.controller.plist 2>/dev/null
+rm -f ~/Library/LaunchAgents/com.menubartext.controller.plist
+
+# Kill running processes
+pkill -f MenuBarTextController 2>/dev/null
+pkill -f MenuBarTextOverlay 2>/dev/null
+
+# Remove applications
+rm -rf /Applications/MenuBarTextOverlay.app
+rm -rf /Applications/MenuBarTextController.app
+
+# Remove user settings (optional)
+rm -f ~/.menubartext_content
+rm -f ~/.menubartext_position  
+rm -f ~/.menubartext_color
+```
+
+<Warning>
+The uninstallation script provides an option to preserve your configuration files. If you choose to keep them, you can restore your settings when reinstalling.
+</Warning>
+
+## Compatibility and limitations
+
+### Known limitations
+
+- **Menu bar auto-hide required:** Doesn't function properly with always-visible menu bar
+- **Single display optimization:** Multi-monitor setups show text on primary display only
+- **No Notch support:** May not position correctly on MacBook Pro models with notch
+- **Fixed font:** Cannot customize font family or size through UI
+
+### Platform compatibility
+
+| Platform | Compatibility |
+|----------|---------------|
+| macOS 13 Ventura | ✅ Fully supported |
+| macOS 14 Sonoma | ✅ Fully supported |
+| macOS 15 Sequoia | ✅ Fully supported |
+| macOS 12 Monterey | ❌ Not supported |
+| Intel Macs | ✅ Compatible |
+| Apple Silicon (M1/M2/M3) | ✅ Compatible |
+
+<Info>
+MenuBarText compiles as a universal binary and runs natively on both Intel and Apple Silicon Macs.
+</Info>

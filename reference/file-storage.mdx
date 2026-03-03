@@ -1,0 +1,399 @@
+---
+title: File storage
+description: Configuration file formats, locations, and data structures used by MenuBarText
+---
+
+MenuBarText stores all configuration in plain text files in your home directory. This approach provides transparency, easy debugging, and simple manual editing when needed.
+
+## Configuration files
+
+All configuration files are stored in your home directory with the `.menubartext_` prefix.
+
+<CardGroup cols={3}>
+  <Card title="Content" icon="file-lines">
+    `~/.menubartext_content`
+  </Card>
+  <Card title="Position" icon="up-down-left-right">
+    `~/.menubartext_position`
+  </Card>
+  <Card title="Color" icon="palette">
+    `~/.menubartext_color`
+  </Card>
+</CardGroup>
+
+## Text content file
+
+**Path:** `~/.menubartext_content`
+
+**Format:** Plain text (UTF-8)
+
+**Purpose:** Stores the custom text to display in the menu bar
+
+### Structure
+
+The file contains raw text with no special formatting:
+
+```
+Your custom text here
+```
+
+### Implementation
+
+```swift
+// Reading text - menubar_text.swift:44-51
+func loadCustomText() -> String {
+    let textFilePath = NSHomeDirectory() + "/.menubartext_content"
+    if let text = try? String(contentsOfFile: textFilePath, encoding: .utf8)
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+       !text.isEmpty {
+        return text
+    }
+    return "Your custom text here"  // Default fallback
+}
+```
+
+```swift
+// Writing text - menubar_text_controller.swift:116-117
+let textFilePath = NSHomeDirectory() + "/.menubartext_content"
+try? customText.write(toFile: textFilePath, atomically: true, encoding: .utf8)
+```
+
+### Examples
+
+<Tabs>
+  <Tab title="Simple text">
+    ```
+    Stay focused, stay productive
+    ```
+  </Tab>
+  
+  <Tab title="With emoji">
+    ```
+    🚀 You've got this! Keep coding!
+    ```
+  </Tab>
+  
+  <Tab title="Longer message">
+    ```
+    Progress over perfection - every line of code is a step forward
+    ```
+  </Tab>
+</Tabs>
+
+<Info>
+The file supports full Unicode, including emojis and international characters.
+</Info>
+
+## Position file
+
+**Path:** `~/.menubartext_position`
+
+**Format:** JSON
+
+**Purpose:** Stores X and Y coordinates for text positioning
+
+### Structure
+
+The file contains a JSON object with two integer properties:
+
+```json
+{"x":20,"y":5}
+```
+
+<ParamField path="x" type="integer" required>
+  Horizontal position in pixels from the left edge of the screen. Must be ≥ 0.
+</ParamField>
+
+<ParamField path="y" type="integer" required>
+  Vertical position in pixels from the bottom of the menu bar. Range: -10 to 20.
+</ParamField>
+
+### Implementation
+
+```swift
+// Reading position - menubar_text.swift:53-62
+func loadPosition() -> (x: Int, y: Int) {
+    let posFilePath = NSHomeDirectory() + "/.menubartext_position"
+    if let posData = try? String(contentsOfFile: posFilePath, encoding: .utf8),
+       let data = posData.data(using: .utf8),
+       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Int],
+       let x = json["x"], let y = json["y"] {
+        return (x, y)
+    }
+    return (20, 5)  // Default position
+}
+```
+
+```swift
+// Writing position - menubar_text_controller.swift:268-275
+func savePosition(_ x: Int, _ y: Int) {
+    let posFilePath = NSHomeDirectory() + "/.menubartext_position"
+    let posData = ["x": x, "y": y]
+    if let jsonData = try? JSONSerialization.data(withJSONObject: posData),
+       let jsonString = String(data: jsonData, encoding: .utf8) {
+        try? jsonString.write(toFile: posFilePath, atomically: true, encoding: .utf8)
+    }
+}
+```
+
+### Coordinate system
+
+The position coordinates use a specific coordinate system relative to the menu bar:
+
+- **X-axis:** Left to right (0 = left edge of screen)
+- **Y-axis:** Bottom to top (within menu bar area)
+- **Origin:** Bottom-left of menu bar area
+
+```
+┌─────────────────────────────────────┐
+│  Menu Bar (hidden)                  │
+│  ↑ y=20                             │
+│  │                                  │
+│  │ y=5 (default)                    │
+│  ↓ y=-10                            │
+└─────────────────────────────────────┘
+x=0      x=20 (default)      x=screen width
+```
+
+### Position constraints
+
+The code enforces boundaries to prevent off-screen text:
+
+```swift
+// From menubar_text_controller.swift:250-255
+func adjustPosition(_ deltaX: Int, _ deltaY: Int) {
+    let currentPos = loadPosition()
+    let newX = max(0, currentPos.x + deltaX)
+    let newY = max(-10, min(20, currentPos.y + deltaY))
+    savePosition(newX, newY)
+}
+```
+
+| Axis | Minimum | Maximum | Default |
+|------|---------|---------|---------|
+| X | 0 | Unlimited* | 20 |
+| Y | -10 | 20 | 5 |
+
+<Note>
+*While X has no hard maximum, text becomes invisible when it extends beyond the screen width.
+</Note>
+
+### Common positions
+
+<Accordion title="Left side (default)">
+  ```json
+  {"x":20,"y":5}
+  ```
+  Positions text near the left edge with standard vertical alignment.
+</Accordion>
+
+<Accordion title="Center screen">
+  ```json
+  {"x":600,"y":5}
+  ```
+  Approximate center for a 1920px wide screen.
+</Accordion>
+
+<Accordion title="Right side">
+  ```json
+  {"x":1600,"y":5}
+  ```
+  Positions text toward the right (adjust based on screen width).
+</Accordion>
+
+<Accordion title="Lower in menu bar">
+  ```json
+  {"x":20,"y":-5}
+  ```
+  Drops text lower in the menu bar area.
+</Accordion>
+
+## Color file
+
+**Path:** `~/.menubartext_color`
+
+**Format:** Plain text (single word)
+
+**Purpose:** Stores the selected color name
+
+### Structure
+
+The file contains a single color keyword:
+
+```
+yellow
+```
+
+### Valid values
+
+Only four color values are supported:
+
+| Value | NSColor Mapping | Use Case |
+|-------|----------------|----------|
+| `yellow` | `.systemYellow` | Default, high visibility |
+| `white` | `.white` | Dark backgrounds |
+| `red` | `.systemRed` | Urgent reminders |
+| `green` | `.systemGreen` | Success, calm focus |
+
+### Implementation
+
+```swift
+// Reading color - menubar_text.swift:64-76
+func loadColor() -> NSColor {
+    let colorFilePath = NSHomeDirectory() + "/.menubartext_color"
+    if let colorName = try? String(contentsOfFile: colorFilePath, encoding: .utf8)
+        .trimmingCharacters(in: .whitespacesAndNewlines) {
+        switch colorName {
+        case "yellow": return .systemYellow
+        case "white": return .white
+        case "red": return .systemRed
+        case "green": return .systemGreen
+        default: return .systemYellow
+        }
+    }
+    return .systemYellow  // Default fallback
+}
+```
+
+```swift
+// Writing color - menubar_text_controller.swift:277-280
+func saveColor(_ color: String) {
+    let colorFilePath = NSHomeDirectory() + "/.menubartext_color"
+    try? color.write(toFile: colorFilePath, atomically: true, encoding: .utf8)
+}
+```
+
+### Examples
+
+<CodeGroup>
+
+```bash Yellow (default)
+echo "yellow" > ~/.menubartext_color
+```
+
+```bash White
+echo "white" > ~/.menubartext_color
+```
+
+```bash Red
+echo "red" > ~/.menubartext_color
+```
+
+```bash Green
+echo "green" > ~/.menubartext_color
+```
+
+</CodeGroup>
+
+<Warning>
+Invalid color values will fall back to yellow. The system does not support custom color codes or RGB values.
+</Warning>
+
+## File operations
+
+### Atomic writes
+
+All file writes use the `atomically: true` parameter to prevent corruption:
+
+```swift
+try? customText.write(toFile: textFilePath, atomically: true, encoding: .utf8)
+```
+
+This ensures that:
+1. The new content is written to a temporary file
+2. The temporary file replaces the original only if the write succeeds
+3. Partial writes never corrupt existing data
+
+### File watching
+
+The overlay app polls all three files every second:
+
+```swift
+// From menubar_text.swift:78-105
+Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+    // Check text changes
+    let newText = self.loadCustomText()
+    if self.label.stringValue != newText {
+        self.label.stringValue = newText
+    }
+    
+    // Check position changes
+    let newPosition = self.loadPosition()
+    // ... update if changed
+    
+    // Check color changes
+    let newColor = self.loadColor()
+    // ... update if changed
+}
+```
+
+<Tip>
+You can manually edit these files while the overlay is running, and changes will appear within 1 second.
+</Tip>
+
+## Manual file editing
+
+For advanced users or automation scripts:
+
+<Steps>
+  <Step title="Edit the configuration file">
+    Open the desired file in any text editor:
+    ```bash
+    nano ~/.menubartext_content
+    ```
+  </Step>
+  
+  <Step title="Make your changes">
+    Modify the content according to the format specifications above.
+  </Step>
+  
+  <Step title="Save the file">
+    The overlay will detect changes within 1 second and update automatically.
+  </Step>
+</Steps>
+
+### Automation example
+
+You can script text changes using shell commands:
+
+```bash
+# Morning greeting
+echo "☀️ Good morning! Time to be productive" > ~/.menubartext_content
+
+# Change color based on time of day
+if [ $(date +%H) -ge 18 ]; then
+    echo "white" > ~/.menubartext_color
+else
+    echo "yellow" > ~/.menubartext_color
+fi
+```
+
+## File permissions
+
+All configuration files should have standard user read/write permissions:
+
+```bash
+-rw-r--r--  1 user  staff  ~/.menubartext_content
+-rw-r--r--  1 user  staff  ~/.menubartext_position
+-rw-r--r--  1 user  staff  ~/.menubartext_color
+```
+
+<Info>
+The files are created automatically when you first use MenuBarText. You don't need to create them manually.
+</Info>
+
+## Backup and migration
+
+To back up your settings:
+
+```bash
+# Backup
+cp ~/.menubartext_* ~/Documents/menubartext-backup/
+
+# Restore
+cp ~/Documents/menubartext-backup/.menubartext_* ~/
+```
+
+<Note>
+These files contain no sensitive data and can be safely stored in version control or cloud storage.
+</Note>

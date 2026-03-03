@@ -1,0 +1,166 @@
+---
+title: Basic usage
+description: Learn how to use MenuBarText to display custom text in your macOS menu bar area
+---
+
+MenuBarText displays customizable text in your menu bar area when it's hidden. This guide will walk you through the basic operations to get started.
+
+## How MenuBarText works
+
+MenuBarText consists of two components that work together:
+
+1. **MenuBarTextOverlay.app** - Displays the actual text in the menu bar area
+2. **MenuBarTextController.app** - Provides the menu bar controls with a quote bubble icon
+
+Both apps use file-based communication for real-time updates, ensuring your text changes appear immediately without requiring a restart.
+
+<Note>
+MenuBarText works best when your menu bar is set to auto-hide. Go to **System Preferences → Dock & Menu Bar** to enable this setting.
+</Note>
+
+## Starting and stopping the text overlay
+
+The text overlay can be controlled from the menu bar controller:
+
+<Steps>
+  <Step title="Locate the quote bubble icon">
+    Look for the quote bubble icon (`quote.bubble`) in your menu bar. This is your MenuBarText controller.
+  </Step>
+  
+  <Step title="Click to open the menu">
+    Click the quote bubble icon to see all available options.
+  </Step>
+  
+  <Step title="Start or stop the overlay">
+    - Select **"Start Text"** (⌘S) to launch the text overlay
+    - Select **"Stop Text"** (⌘X) to hide the text overlay
+  </Step>
+</Steps>
+
+<Info>
+The controller automatically checks whether the overlay is running and enables/disables menu items accordingly. When the overlay is running, "Start Text" is disabled; when stopped, "Stop Text" is disabled.
+</Info>
+
+## Setting your custom text
+
+The primary feature of MenuBarText is displaying your own custom text:
+
+<Steps>
+  <Step title="Open the text dialog">
+    Click the quote bubble icon → **"Set Custom Text..."** (⌘C)
+  </Step>
+  
+  <Step title="Enter your text">
+    Type any text you want to display in the text field. This can be:
+    - Motivational quotes
+    - Coding reminders
+    - Personal goals
+    - Project objectives
+    - Any text that helps you stay focused
+  </Step>
+  
+  <Step title="Save your text">
+    Click **"Set Text"** to save. Your text will be stored in `~/.menubartext_content` and appear immediately.
+  </Step>
+</Steps>
+
+The dialog will show your existing text if you've previously set one, making it easy to edit.
+
+<Tip>
+MenuBarText supports full Unicode, including emojis! Try adding emojis to make your text more visually engaging.
+</Tip>
+
+## Text persistence
+
+Your custom text is automatically saved and persists across sessions:
+
+- **File location**: `~/.menubartext_content`
+- **Encoding**: UTF-8 (supports international characters and emojis)
+- **Updates**: Real-time - changes appear immediately
+- **Recovery**: Text is preserved even if the app restarts
+
+When you set new text, the controller automatically:
+
+1. Saves the text to the file
+2. Stops the current overlay (if running)
+3. Waits 1 second for a clean restart
+4. Relaunches the overlay with your new text
+
+This ensures a smooth transition without any manual intervention.
+
+## Menu bar controls overview
+
+Here's a complete overview of the menu bar controller interface:
+
+<Accordion title="Start Text (⌘S)">
+  Launches the MenuBarTextOverlay app. The controller searches for the app in multiple locations:
+  - `/Applications/MenuBarTextOverlay.app`
+  - `~/Desktop/Code/MenuBarText/MenuBarTextOverlay.app`
+  - Current directory
+  
+  This menu item is enabled only when the overlay is not running.
+</Accordion>
+
+<Accordion title="Stop Text (⌘X)">
+  Stops the MenuBarTextOverlay app using `pkill -f MenuBarTextOverlay`. This menu item is enabled only when the overlay is running.
+</Accordion>
+
+<Accordion title="Set Custom Text... (⌘C)">
+  Opens a dialog to enter or edit your custom text. Shows your existing text if previously set.
+</Accordion>
+
+<Accordion title="Text Color">
+  Opens a submenu with four color options:
+  - 🟡 Yellow (default)
+  - ⚪ White
+  - 🔴 Red
+  - 🟢 Green
+  
+  See the [Customization](/user-guide/customization) guide for more details.
+</Accordion>
+
+<Accordion title="Open Adjustment Panel (⌘A)">
+  Opens the position adjustment window with arrow controls for precise text positioning. See the [Position Adjustment](/user-guide/position-adjustment) guide for details.
+</Accordion>
+
+<Accordion title="Quit Controller (⌘Q)">
+  Closes the MenuBarTextController app. Note that this doesn't automatically stop the text overlay - you may want to stop it first.
+</Accordion>
+
+## Understanding the file-based system
+
+MenuBarText uses three configuration files stored in your home directory:
+
+| File | Purpose | Format | Example |
+|------|---------|--------|--------|
+| `~/.menubartext_content` | Stores your custom text | Plain text (UTF-8) | `"Keep coding, you're doing great!"` |
+| `~/.menubartext_color` | Stores the selected color | Plain text | `"yellow"`, `"white"`, `"red"`, or `"green"` |
+| `~/.menubartext_position` | Stores X/Y coordinates | JSON | `{"x":20,"y":5}` |
+
+These files enable the controller and overlay apps to communicate without requiring complex inter-process communication.
+
+## Default settings
+
+If you haven't customized MenuBarText yet, here are the defaults:
+
+- **Position**: X=20, Y=5 (top-left area of menu bar)
+- **Color**: Yellow (if not specified)
+- **Text**: None (you must set your first text)
+- **Font**: System font, 14pt
+- **Alignment**: Left-aligned
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Customize colors" icon="palette" href="/user-guide/customization">
+    Learn how to change text colors to match your workflow
+  </Card>
+  
+  <Card title="Adjust position" icon="arrows-up-down-left-right" href="/user-guide/position-adjustment">
+    Fine-tune the exact position of your text
+  </Card>
+  
+  <Card title="Troubleshooting" icon="wrench" href="/user-guide/troubleshooting">
+    Solve common issues and get help
+  </Card>
+</CardGroup>

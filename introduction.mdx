@@ -1,0 +1,87 @@
+---
+title: Welcome to MenuBarText
+description: Display customizable text in your macOS menu bar area when it's hidden. Perfect for reminders, quotes, goals, or any text you want to keep visible while you work.
+---
+
+<img className="block" src="/images/hero.png" alt="MenuBarText Hero" />
+
+## What is MenuBarText?
+
+MenuBarText is a lightweight macOS app that displays customizable text in your menu bar area when it's hidden. Keep your motivation, reminders, or important notes always visible while you work.
+
+Designed for developers, students, and professionals who want persistent text reminders without the distraction of full applications or notifications.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Custom text" icon="pen-to-square">
+    Display any text you want - quotes, reminders, goals, or notes. Full Unicode support including emojis.
+  </Card>
+  <Card title="4 color options" icon="palette">
+    Choose from Yellow, White, Red, or Green to match your background and visibility preferences.
+  </Card>
+  <Card title="Adjustable position" icon="arrows-up-down-left-right">
+    Move text pixel by pixel anywhere in the menu bar area with intuitive arrow controls.
+  </Card>
+  <Card title="Lightweight" icon="feather">
+    Uses less than 25MB RAM with minimal CPU impact. Built with native Swift and Cocoa.
+  </Card>
+  <Card title="Auto-start" icon="rocket">
+    Launches automatically on login and runs silently in the background.
+  </Card>
+  <Card title="Easy controls" icon="bars">
+    Simple menu bar interface with quote bubble icon for quick access to all settings.
+  </Card>
+</CardGroup>
+
+## How it works
+
+MenuBarText consists of two lightweight components:
+
+1. **MenuBarTextOverlay.app** - Displays the actual text as a transparent overlay
+2. **MenuBarTextController.app** - Provides menu bar controls and settings
+
+Both apps communicate through file-based updates for real-time changes without restart.
+
+<Note>
+  MenuBarText works seamlessly with macOS auto-hide menu bar. The text appears when your menu bar is hidden and temporarily disappears when the menu bar is shown.
+</Note>
+
+## Requirements
+
+- macOS 13.0 or later
+- Menu bar set to auto-hide (System Settings → Desktop & Dock → Automatically hide and show the menu bar)
+
+## Use cases
+
+<AccordionGroup>
+  <Accordion title="For developers">
+    - Keep coding motivation visible during long sessions
+    - Display current project objectives or sprint goals
+    - Combat imposter syndrome with positive affirmations
+    - Maintain focus with concentration phrases
+  </Accordion>
+  <Accordion title="For students">
+    - Show encouraging messages during study sessions
+    - Display exam reminders and important dates
+    - Keep learning quotes visible for inspiration
+    - Celebrate progress milestones
+  </Accordion>
+  <Accordion title="For professionals">
+    - Display daily mantras and professional development reminders
+    - Show important talking points before meetings
+    - Track project deadlines and milestones
+    - Remind yourself about work-life balance priorities
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install MenuBarText in minutes with our automated install script
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get up and running with your first custom text
+  </Card>
+</CardGroup>

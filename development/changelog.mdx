@@ -1,0 +1,166 @@
+---
+title: Changelog
+description: All notable changes and version history for MenuBarText
+---
+
+All notable changes to MenuBarText will be documented in this file.
+
+## [1.0.0] - 2025-01-15
+
+The initial release of MenuBarText brings a lightweight, customizable way to display text in your macOS menu bar area.
+
+### Added
+
+#### Core features
+
+- **Custom text input** with persistent storage across restarts
+- **4 color options** (Yellow, White, Red, Green) for optimal visibility on any background
+- **Adjustable text positioning** with fine-grained controls for precise placement
+- **Auto-start on login** functionality via Launch Agent integration
+- **Menu bar controller** with intuitive interface and easy access
+- **Lightweight overlay** that respects menu bar auto-hide settings
+- **Real-time updates** without requiring app restart
+- **Easy installation and uninstallation** scripts for streamlined setup
+
+#### Features in detail
+
+**Text management**
+
+- Set and update custom text content via dialog interface
+- Persistent storage in `~/.menubartext_content`
+- Support for any UTF-8 text input
+- Real-time display updates
+
+**Visual customization**
+
+- Choose from 4 distinct color options:
+  - Yellow: High visibility on dark backgrounds
+  - White: Clean look on dark backgrounds
+  - Red: High contrast and attention-grabbing
+  - Green: Easy on the eyes, good for motivational text
+- Color preferences saved in `~/.menubartext_color`
+- Instant color switching without restart
+
+**Position control**
+
+- Move text anywhere in the menu bar area
+- Fine-grained horizontal and vertical adjustments
+- Position saved to `~/.menubartext_position`
+- Reset to default position option
+- Adjustment panel with arrow buttons for precise control
+
+**System integration**
+
+- Works seamlessly with macOS menu bar auto-hide feature
+- Integrates with system preferences
+- Launch Agent ensures automatic startup
+- Background apps (LSUIElement) don't clutter Dock
+
+**Resource efficiency**
+
+- Minimal CPU usage during idle state
+- Low memory footprint
+- File-based inter-process communication
+- No network or external dependencies
+
+**User interface**
+
+- Simple menu bar icon (quote bubble)
+- Clear menu options for all controls
+- Dialog-based text input
+- Dedicated adjustment panel for positioning
+
+### Technical details
+
+#### Architecture
+
+- Built with Swift and Cocoa framework
+- Two-component architecture:
+  - **MenuBarTextOverlay.app**: Displays the overlay text
+  - **MenuBarTextController.app**: Provides menu bar controls
+- File-based inter-app communication using:
+  - `~/.menubartext_content`: Text content storage
+  - `~/.menubartext_position`: Position coordinates
+  - `~/.menubartext_color`: Color preference
+
+#### System requirements
+
+- Compatible with macOS 13.0 and later
+- Requires Xcode Command Line Tools for building from source
+- Works best with menu bar set to auto-hide
+
+#### Installation
+
+- Automated installation via `install.sh` script
+- Compiles Swift source using `swiftc` compiler
+- Creates proper .app bundle structure with Info.plist
+- Installs to `/Applications/` directory
+- Sets up Launch Agent at `~/Library/LaunchAgents/com.menubartext.controller.plist`
+
+#### Build process
+
+- Uses `swiftc` with `-framework Cocoa` flag
+- Generates standard macOS .app bundles
+- Info.plist includes:
+  - Bundle identifiers (`com.menubartext.overlay`, `com.menubartext.controller`)
+  - LSUIElement for background operation
+  - Minimum system version (13.0)
+
+### Configuration
+
+MenuBarText stores its configuration in the following files:
+
+- `~/.menubartext_content` - Your custom text content
+- `~/.menubartext_position` - Text position coordinates
+- `~/.menubartext_color` - Selected color preference
+- `~/Library/LaunchAgents/com.menubartext.controller.plist` - Auto-start configuration
+
+### Known limitations
+
+- Requires menu bar to be set to auto-hide for optimal display
+- Text appears in a fixed window layer (always on top)
+- Limited to single-line text display
+- Color options are preset (no custom RGB selection)
+
+### Installation instructions
+
+For detailed installation instructions, see the [Quick Start guide](/quickstart).
+
+For building from source, see the [Building from source guide](/development/building-from-source).
+
+### Uninstallation
+
+Run the included uninstall script:
+
+```bash
+./uninstall.sh
+```
+
+This will:
+1. Stop the auto-start service
+2. Remove both applications from `/Applications/`
+3. Optionally remove user settings and saved content
+
+---
+
+## Contributing
+
+When contributing, please add your changes to a new "Unreleased" section at the top of this file. Follow the existing format:
+
+```markdown
+## [Unreleased]
+
+### Added
+- New features you've added
+
+### Changed
+- Changes to existing functionality
+
+### Fixed
+- Bug fixes
+
+### Removed
+- Removed features or functionality
+```
+
+For more information, see our [Contributing guide](/development/contributing).

@@ -1,80 +1,353 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get up and running with MenuBarText in 5 minutes
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
+Before you begin, make sure you've completed the [installation](/installation) and have:
 
-### Step 1: Set up your local environment
+- MenuBarTextController running (quote bubble icon visible in menu bar)
+- Menu bar set to auto-hide in System Settings
+
+## Set your first custom text
+
+<Steps>
+  <Step title="Open the controller menu">
+    Click the **quote bubble icon** in your menu bar.
+    
+    <img src="/images/controller-menu.png" alt="Controller menu" />
+  </Step>
+
+  <Step title="Select 'Set Custom Text...'">
+    A dialog will appear prompting you to enter your text.
+    
+    <img src="/images/set-text-dialog.png" alt="Set custom text dialog" />
+  </Step>
+
+  <Step title="Enter your text">
+    Type any text you want to display. For example:
+    
+    - `"Code with confidence"`
+    - `"You got this! 💪"`
+    - `"Ship it! 🚀"`
+    - `"Stay focused, stay awesome"`
+    
+    <Tip>
+      MenuBarText supports full Unicode, so feel free to use emojis and special characters!
+    </Tip>
+  </Step>
+
+  <Step title="Click 'Set Text'">
+    Your text will appear immediately in the menu bar area when the menu bar is hidden.
+    
+    A confirmation dialog will show your updated text.
+  </Step>
+</Steps>
+
+<Note>
+  Your custom text is automatically saved to `~/.menubartext_content` and will persist across restarts.
+</Note>
+
+## Start the text overlay
+
+If the text isn't visible yet, you may need to start the overlay:
+
+<Steps>
+  <Step title="Click the quote bubble icon">
+    Open the MenuBarTextController menu.
+  </Step>
+
+  <Step title="Select 'Start Text'">
+    This launches MenuBarTextOverlay.app, which displays your text.
+    
+    <Info>
+      The overlay runs in the background without a dock icon. It's designed to be completely non-intrusive.
+    </Info>
+  </Step>
+
+  <Step title="Hide your menu bar">
+    Move your cursor away from the top of the screen to hide the menu bar.
+    
+    Your custom text should now be visible!
+  </Step>
+</Steps>
+
+## Change text color
+
+MenuBarText offers 4 color options to match your background and preferences.
+
+<Steps>
+  <Step title="Open the controller menu">
+    Click the quote bubble icon.
+  </Step>
+
+  <Step title="Hover over 'Text Color'">
+    A submenu will appear with color options:
+    
+    - 🟡 **Yellow** - Default bright option (works on most backgrounds)
+    - ⚪ **White** - Perfect for dark backgrounds
+    - 🔴 **Red** - High visibility for important reminders
+    - 🟢 **Green** - Easy on the eyes for extended viewing
+  </Step>
+
+  <Step title="Select your preferred color">
+    Click any color option. The change applies immediately - no restart needed.
+  </Step>
+</Steps>
+
+<CodeGroup>
+```bash Yellow (default)
+echo "yellow" > ~/.menubartext_color
+```
+
+```bash White
+echo "white" > ~/.menubartext_color
+```
+
+```bash Red
+echo "red" > ~/.menubartext_color
+```
+
+```bash Green
+echo "green" > ~/.menubartext_color
+```
+</CodeGroup>
+
+<Tip>
+  You can also change colors by directly editing the `~/.menubartext_color` file. The overlay checks this file every second and updates automatically.
+</Tip>
+
+## Adjust text position
+
+Fine-tune where your text appears in the menu bar area.
+
+<Steps>
+  <Step title="Open the adjustment panel">
+    Click the quote bubble icon → **"Open Adjustment Panel"**
+    
+    A small window will appear with position controls.
+    
+    <img src="/images/adjustment-panel.png" alt="Position adjustment panel" />
+  </Step>
+
+  <Step title="Use arrow buttons to move text">
+    - **← Left** - Move text 10 pixels left
+    - **Right →** - Move text 10 pixels right  
+    - **↑ Up** - Move text 2 pixels up
+    - **Down ↓** - Move text 2 pixels down
+    
+    Changes appear in real-time as you click.
+  </Step>
+
+  <Step title="Reset position if needed">
+    Click **"Reset Position"** to return to the default location (x: 20, y: 5).
+  </Step>
+
+  <Step title="Close the panel">
+    Click **"Close"** when you're satisfied with the position.
+    
+    <Info>
+      You can reopen the adjustment panel anytime. The window stays open for multiple adjustments.
+    </Info>
+  </Step>
+</Steps>
+
+### Manual position editing
+
+For precise control, edit the position file directly:
+
+```bash
+echo '{"x": 50, "y": 10}' > ~/.menubartext_position
+```
+
+<Note>
+  Position coordinates:
+  - **x**: Horizontal position from left (pixels)
+  - **y**: Vertical position from top of menu bar (pixels, range: -10 to 20)
+</Note>
+
+## Control the overlay
+
+Manage when the text overlay is running.
+
+<Tabs>
+  <Tab title="Start overlay">
+    ```bash From menu bar
+    Click quote bubble → "Start Text"
+    ```
+    
+    Or manually:
+    
+    ```bash
+    open /Applications/MenuBarTextOverlay.app
+    ```
+  </Tab>
+  
+  <Tab title="Stop overlay">
+    ```bash From menu bar
+    Click quote bubble → "Stop Text"
+    ```
+    
+    Or using terminal:
+    
+    ```bash
+    pkill -f MenuBarTextOverlay
+    ```
+  </Tab>
+  
+  <Tab title="Check status">
+    ```bash
+    pgrep -f MenuBarTextOverlay
+    ```
+    
+    If running, you'll see a process ID number.
+  </Tab>
+</Tabs>
+
+<Warning>
+  The controller automatically enables/disables menu items based on overlay status. "Start Text" is only enabled when the overlay is stopped.
+</Warning>
+
+## Understanding the architecture
+
+MenuBarText uses a two-app design for efficiency:
+
+```mermaid
+graph LR
+    A[MenuBarTextController] -->|Controls| B[MenuBarTextOverlay]
+    B -->|Reads| C[~/.menubartext_content]
+    B -->|Reads| D[~/.menubartext_position]
+    B -->|Reads| E[~/.menubartext_color]
+    A -->|Writes| C
+    A -->|Writes| D
+    A -->|Writes| E
+```
+
+### How it works
+
+1. **MenuBarTextController** provides the menu bar interface and writes settings to files
+2. **MenuBarTextOverlay** reads these files every second and updates the display
+3. Changes appear in real-time without restarting either app
+
+### File monitoring
+
+The overlay uses a timer-based file watcher (menubar_text.swift:78-105):
+
+```swift
+Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+    // Check text changes
+    let newText = self.loadCustomText()
+    if self.label.stringValue != newText {
+        self.label.stringValue = newText
+    }
+    
+    // Check position changes
+    let newPosition = self.loadPosition()
+    // Update position if changed...
+    
+    // Check color changes
+    let newColor = self.loadColor()
+    if self.label.textColor != newColor {
+        self.label.textColor = newColor
+    }
+}
+```
+
+## Common workflows
 
 <AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+  <Accordion title="Daily motivation quotes">
+    Set different quotes each day to keep your motivation fresh:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
+    ```bash
+    # Monday
+    echo "Start strong! 💪" > ~/.menubartext_content
+    
+    # Tuesday  
+    echo "Progress over perfection" > ~/.menubartext_content
+    
+    # Wednesday
+    echo "Halfway there! Keep going" > ~/.menubartext_content
+    ```
   </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+  
+  <Accordion title="Project-specific reminders">
+    Display current sprint goals or project objectives:
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
+    ```bash
+    echo "Sprint 23: Ship user dashboard" > ~/.menubartext_content
+    ```
+    
+    Update as you complete tasks or start new projects.
+  </Accordion>
+  
+  <Accordion title="Focus mode">
+    Use colors to indicate your current work mode:
+    
+    ```bash
+    # Deep focus - red
+    echo "🔴 Deep work - Do not disturb" > ~/.menubartext_content
+    echo "red" > ~/.menubartext_color
+    
+    # Available - green
+    echo "🟢 Available for collaboration" > ~/.menubartext_content  
+    echo "green" > ~/.menubartext_color
+    ```
+  </Accordion>
+  
+  <Accordion title="Pomodoro timer reminder">
+    Remind yourself to take breaks:
+    
+    ```bash
+    echo "⏰ Take a break every 25 minutes" > ~/.menubartext_content
+    ```
   </Accordion>
 </AccordionGroup>
 
-### Step 2: Deploy your changes
+## Keyboard shortcuts
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+MenuBarTextController includes convenient keyboard shortcuts:
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+| Shortcut | Action |
+|----------|--------|
+| <kbd>⌘</kbd> + <kbd>S</kbd> | Start text overlay |
+| <kbd>⌘</kbd> + <kbd>X</kbd> | Stop text overlay |
+| <kbd>⌘</kbd> + <kbd>C</kbd> | Set custom text |
+| <kbd>⌘</kbd> + <kbd>A</kbd> | Open adjustment panel |
+| <kbd>⌘</kbd> + <kbd>Q</kbd> | Quit controller |
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Tip>
+  These shortcuts work when the MenuBarTextController menu is open.
+</Tip>
 
-### Step 3: Go live
+## Performance tips
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+MenuBarText is designed to be lightweight, but here are some best practices:
+
+- **Keep text concise**: Shorter text uses less resources and is easier to read at a glance
+- **Avoid frequent updates**: The 1-second polling interval is optimized for battery life
+- **Use system colors**: The app uses native NSColor for efficient rendering
+
+<Info>
+  MenuBarText typically uses less than 25MB of RAM total (both apps combined) and has minimal CPU impact.
+</Info>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you're up and running:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Explore features" icon="sparkles">
+    Learn about advanced customization options and use cases
+  </Card>
+  <Card title="Contribute" icon="code-pull-request">
+    Check out the source code and contribute to MenuBarText on GitHub
+  </Card>
+  <Card title="Report issues" icon="bug">
+    Found a bug? Open an issue on our GitHub repository
+  </Card>
+  <Card title="Share feedback" icon="comments">
+    Let us know how you're using MenuBarText and what features you'd like to see
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

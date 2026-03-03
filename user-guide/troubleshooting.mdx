@@ -1,0 +1,479 @@
+---
+title: Troubleshooting
+description: Solutions to common MenuBarText issues and problems
+---
+
+This guide helps you diagnose and fix common issues with MenuBarText.
+
+## Common issues
+
+### Text overlay not starting
+
+<AccordionGroup>
+  <Accordion title="Error: 'Could not find MenuBarTextOverlay.app'">
+    **Cause**: The controller can't locate the MenuBarTextOverlay.app file.
+    
+    **Solution**:
+    
+    The controller searches these locations in order:
+    1. `/Applications/MenuBarTextOverlay.app`
+    2. `~/Desktop/Code/MenuBarText/MenuBarTextOverlay.app`
+    3. Current directory
+    
+    From the source code:
+    ```swift
+    let possiblePaths = [
+        "/Applications/MenuBarTextOverlay.app",
+        "\(NSHomeDirectory())/Desktop/Code/MenuBarText/MenuBarTextOverlay.app",
+        "\(FileManager.default.currentDirectoryPath)/MenuBarTextOverlay.app"
+    ]
+    ```
+    From `menubar_text_controller.swift:51-55`
+    
+    **Fix**:
+    - Verify the app exists: `ls -la /Applications/MenuBarTextOverlay.app`
+    - If missing, reinstall using the install script: `./install.sh`
+    - Check application permissions in System Preferences → Security & Privacy
+  </Accordion>
+  
+  <Accordion title="Overlay starts but text doesn't appear">
+    **Cause**: Menu bar is not hidden or text position is off-screen.
+    
+    **Solution**:
+    - Enable menu bar auto-hide: **System Preferences → Dock & Menu Bar → Automatically hide and show the menu bar**
+    - Reset position: Open Adjustment Panel (⌘A) → Click "Reset Position"
+    - Verify text is set: Click quote bubble → "Set Custom Text..." → Enter text
+    - Check that text file exists: `cat ~/.menubartext_content`
+  </Accordion>
+  
+  <Accordion title="'Start Text' menu item is disabled">
+    **Cause**: The controller detects that the overlay is already running.
+    
+    **Context from code**:
+    ```swift
+    func updateMenuItems() {
+        guard let menu = statusItem.menu else { return }
+        
+        if let startItem = menu.item(withTitle: "Start Text") {
+            startItem.isEnabled = !isTextOverlayRunning
+        }
+    }
+    ```
+    From `menubar_text_controller.swift:300-309`
+    
+    **Solution**:
+    - Check if overlay is running: `pgrep -f MenuBarTextOverlay`
+    - If running but not visible, stop and restart it
+    - If process is stuck, manually kill it: `pkill -f MenuBarTextOverlay`
+    - Click "Start Text" again
+  </Accordion>
+</AccordionGroup>
+
+### Text display issues
+
+<AccordionGroup>
+  <Accordion title="Text is barely visible or wrong color">
+    **Cause**: Color doesn't contrast well with your wallpaper.
+    
+    **Solution**:
+    - Try different colors: Click quote bubble → "Text Color" → Select a different option
+    - Yellow: Best for most backgrounds
+    - White: Ideal for dark backgrounds
+    - Red: High visibility on any background
+    - Green: Good for medium-tone backgrounds
+    
+    Color is saved to: `~/.menubartext_color`
+  </Accordion>
+  
+  <Accordion title="Text appears in wrong position">
+    **Cause**: Position coordinates are incorrect or file is corrupted.
+    
+    **Solution**:
+    - Open Adjustment Panel (⌘A)
+    - Click "Reset Position" to return to default (X=20, Y=5)
+    - If reset doesn't work, manually fix the position file:
+      ```bash
+      echo '{"x":20,"y":5}' > ~/.menubartext_position
+      ```
+    - Stop and restart the overlay
+  </Accordion>
+  
+  <Accordion title="Text shows special characters or garbled text">
+    **Cause**: Encoding issue with the text file.
+    
+    **Solution**:
+    - Delete and recreate the text file:
+      ```bash
+      rm ~/.menubartext_content
+      ```
+    - Set text again using the controller: "Set Custom Text..." (⌘C)
+    - Ensure UTF-8 encoding if editing manually:
+      ```bash
+      echo "Your text here" > ~/.menubartext_content
+      ```
+  </Accordion>
+</AccordionGroup>
+
+### Controller issues
+
+<AccordionGroup>
+  <Accordion title="Quote bubble icon not appearing in menu bar">
+    **Cause**: MenuBarTextController is not running or menu bar is full.
+    
+    **Solution**:
+    - Launch the controller: Open `/Applications/MenuBarTextController.app`
+    - Check if it's running: `pgrep -f MenuBarTextController`
+    - If menu bar is crowded, try reducing other icons
+    - Verify installation: `ls -la /Applications/MenuBarTextController.app`
+  </Accordion>
+  
+  <Accordion title="Menu items don't respond to clicks">
+    **Cause**: Controller may be frozen or unresponsive.
+    
+    **Solution**:
+    - Force quit the controller: Activity Monitor → MenuBarTextController → Force Quit
+    - Or use terminal: `pkill -f MenuBarTextController`
+    - Relaunch: `/Applications/MenuBarTextController.app`
+  </Accordion>
+  
+  <Accordion title="Keyboard shortcuts don't work">
+    **Cause**: Another app is using the same shortcuts or accessibility permissions needed.
+    
+    **Solution**:
+    - Try clicking menu items directly instead of using shortcuts
+    - Check for shortcut conflicts with other apps
+    - Grant accessibility permissions: **System Preferences → Security & Privacy → Privacy → Accessibility**
+    - Add MenuBarTextController to the allowed apps list
+  </Accordion>
+</AccordionGroup>
+
+## Process management issues
+
+### Multiple overlay instances running
+
+**Problem**: Multiple copies of the overlay are running, causing duplicate text.
+
+**Diagnosis**:
+```bash
+pgrep -lf MenuBarTextOverlay
+```
+
+If you see multiple process IDs, you have duplicates.
+
+**Solution**:
+```bash
+# Stop all instances
+pkill -f MenuBarTextOverlay
+
+# Wait 2 seconds
+sleep 2
+
+# Start fresh from controller
+# Click quote bubble → "Start Text"
+```
+
+### Overlay won't stop
+
+**Problem**: Clicking "Stop Text" doesn't stop the overlay.
+
+**Diagnosis**:
+```bash
+# Check if process exists
+pgrep -lf MenuBarTextOverlay
+```
+
+**Solution**:
+```bash
+# Force kill the process
+pkill -9 -f MenuBarTextOverlay
+
+# Verify it's stopped
+pgrep -f MenuBarTextOverlay
+# (should return nothing)
+```
+
+## File permission issues
+
+### Cannot save settings
+
+**Problem**: Text, color, or position changes don't persist.
+
+**Diagnosis**:
+```bash
+# Check file permissions
+ls -la ~/.menubartext_*
+```
+
+Files should be readable and writable:
+```
+-rw-r--r--  1 yourusername  staff  ~/.menubartext_content
+-rw-r--r--  1 yourusername  staff  ~/.menubartext_color
+-rw-r--r--  1 yourusername  staff  ~/.menubartext_position
+```
+
+**Solution**:
+```bash
+# Fix permissions
+chmod 644 ~/.menubartext_*
+
+# Or delete and let app recreate them
+rm ~/.menubartext_*
+```
+
+### Files in wrong location
+
+**Problem**: Settings files exist but app doesn't see them.
+
+**Verification**:
+```bash
+# Files must be in home directory
+echo $HOME
+ls -la $HOME/.menubartext_*
+```
+
+**Solution**: Ensure files are in your actual home directory, not a subdirectory.
+
+## Installation issues
+
+### Auto-start not working
+
+<Steps>
+  <Step title="Check LaunchAgent exists">
+    ```bash
+    ls -la ~/Library/LaunchAgents/com.menubartext.controller.plist
+    ```
+    
+    If missing, the auto-start is not installed.
+  </Step>
+  
+  <Step title="Verify LaunchAgent is loaded">
+    ```bash
+    launchctl list | grep menubartext
+    ```
+    
+    Should show: `com.menubartext.controller`
+  </Step>
+  
+  <Step title="Manually load LaunchAgent if needed">
+    ```bash
+    launchctl load ~/Library/LaunchAgents/com.menubartext.controller.plist
+    ```
+  </Step>
+  
+  <Step title="Test by logging out and back in">
+    MenuBarTextController should start automatically.
+  </Step>
+</Steps>
+
+### Apps missing from /Applications
+
+**Problem**: Apps were installed but can't be found.
+
+**Diagnosis**:
+```bash
+ls -la /Applications/MenuBarText*
+```
+
+**Solution**:
+```bash
+# Reinstall using the install script
+cd /path/to/MenuBarText
+./install.sh
+
+# Verify installation
+ls -la /Applications/MenuBarText*
+```
+
+## macOS compatibility issues
+
+### Symbol not found errors
+
+**Problem**: App crashes with "symbol not found" or "dyld" errors.
+
+**Cause**: macOS version is too old.
+
+**Solution**:
+- MenuBarText requires **macOS 13.0 or later**
+- Check your version: **System Preferences → About This Mac**
+- Upgrade macOS if possible
+- Or build from source with adjusted deployment target
+
+### Security warnings
+
+**Problem**: macOS blocks the app from opening ("cannot verify developer").
+
+**Solution**:
+
+<Steps>
+  <Step title="Right-click the app">
+    In Finder, right-click `/Applications/MenuBarTextController.app`
+  </Step>
+  
+  <Step title="Select 'Open'">
+    Choose "Open" from the context menu (not double-click)
+  </Step>
+  
+  <Step title="Click 'Open' in dialog">
+    In the security warning, click "Open"
+  </Step>
+  
+  <Step title="Repeat for overlay">
+    Do the same for `/Applications/MenuBarTextOverlay.app`
+  </Step>
+</Steps>
+
+<Warning>
+Only do this with apps you trust. MenuBarText is open source, so you can review the code before running.
+</Warning>
+
+## Adjustment panel issues
+
+### Panel won't open
+
+**Problem**: Clicking "Open Adjustment Panel" does nothing.
+
+**Diagnosis**: Check if panel is already open but hidden behind other windows.
+
+**Solution**:
+- Use Mission Control to see all windows
+- Or force close controller and restart:
+  ```bash
+  pkill -f MenuBarTextController
+  open /Applications/MenuBarTextController.app
+  ```
+
+### Arrow buttons don't move text
+
+**Problem**: Clicking arrow buttons in adjustment panel has no effect.
+
+**Possible causes**:
+1. Hit boundary limits (X=0, Y=-10, or Y=20)
+2. Position file is read-only
+3. Overlay is not running
+
+**Solution**:
+1. Try moving in opposite direction
+2. Click "Reset Position"
+3. Check file permissions: `ls -la ~/.menubartext_position`
+4. Ensure overlay is running: "Start Text"
+
+## Clean reinstall
+
+If all else fails, perform a clean reinstall:
+
+<Steps>
+  <Step title="Stop all processes">
+    ```bash
+    pkill -f MenuBarText
+    ```
+  </Step>
+  
+  <Step title="Unload LaunchAgent">
+    ```bash
+    launchctl unload ~/Library/LaunchAgents/com.menubartext.controller.plist
+    ```
+  </Step>
+  
+  <Step title="Remove all files">
+    ```bash
+    rm -rf /Applications/MenuBarTextOverlay.app
+    rm -rf /Applications/MenuBarTextController.app
+    rm ~/Library/LaunchAgents/com.menubartext.controller.plist
+    ```
+  </Step>
+  
+  <Step title="Remove settings (optional)">
+    If you want a completely fresh start:
+    ```bash
+    rm ~/.menubartext_content ~/.menubartext_position ~/.menubartext_color
+    ```
+    
+    Otherwise, skip this to keep your settings.
+  </Step>
+  
+  <Step title="Reinstall">
+    ```bash
+    cd /path/to/MenuBarText
+    chmod +x install.sh
+    ./install.sh
+    ```
+  </Step>
+</Steps>
+
+## Getting help
+
+### Diagnostic information
+
+When asking for help, provide this information:
+
+```bash
+# macOS version
+sw_vers
+
+# Check if apps exist
+ls -la /Applications/MenuBarText*
+
+# Check if processes are running
+pgrep -lf MenuBarText
+
+# Check settings files
+ls -la ~/.menubartext_*
+cat ~/.menubartext_content
+cat ~/.menubartext_color
+cat ~/.menubartext_position
+
+# Check LaunchAgent
+ls -la ~/Library/LaunchAgents/com.menubartext.controller.plist
+launchctl list | grep menubartext
+```
+
+### Debug mode
+
+For advanced debugging, run the apps from Terminal to see console output:
+
+```bash
+# Run controller with console output
+/Applications/MenuBarTextController.app/Contents/MacOS/MenuBarTextController
+
+# In another terminal, run overlay
+/Applications/MenuBarTextOverlay.app/Contents/MacOS/MenuBarTextOverlay
+```
+
+This will show any error messages or warnings.
+
+## Known limitations
+
+<Note>
+These are current limitations, not bugs:
+</Note>
+
+- **Menu bar must be auto-hide**: Text only appears when menu bar is hidden
+- **Single text only**: Cannot display multiple rotating quotes (currently)
+- **No font customization**: Font is fixed to system font at 14pt
+- **Horizontal only**: Text is displayed in a single horizontal line
+- **Color choices limited**: Only 4 colors available (yellow, white, red, green)
+
+## Report a bug
+
+If you've found a genuine bug that isn't covered here:
+
+1. Check the [GitHub Issues](https://github.com/yourusername/MenuBarText/issues) page
+2. Search for existing reports
+3. If not found, create a new issue with:
+   - macOS version
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Diagnostic output (see above)
+   - Screenshots if applicable
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Basic usage" icon="book-open" href="/user-guide/basic-usage">
+    Return to the basic usage guide
+  </Card>
+  
+  <Card title="Customization" icon="palette" href="/user-guide/customization">
+    Learn about customization options
+  </Card>
+</CardGroup>

@@ -1,0 +1,327 @@
+---
+title: Installation
+description: Install MenuBarText on your Mac with a single command or build from source
+---
+
+## Prerequisites
+
+Before installing MenuBarText, ensure your system meets these requirements:
+
+- macOS 13.0 or later
+- Xcode Command Line Tools (for building from source)
+
+<Info>
+  Check your macOS version by clicking the Apple menu → About This Mac
+</Info>
+
+## Installation methods
+
+<Tabs>
+  <Tab title="Quick install">
+    ### Download and install
+
+    The fastest way to get started with MenuBarText is using the automated install script.
+
+    <Steps>
+      <Step title="Download the latest release">
+        Download the latest MenuBarText release from the GitHub releases page:
+        
+        ```bash
+        # Clone the repository
+        git clone https://github.com/yourusername/MenuBarText.git
+        cd MenuBarText
+        ```
+      </Step>
+
+      <Step title="Make the install script executable">
+        ```bash
+        chmod +x install.sh
+        ```
+      </Step>
+
+      <Step title="Run the installation">
+        ```bash
+        ./install.sh
+        ```
+
+        The script will:
+        - Verify your macOS version (13.0+)
+        - Build both application bundles from source
+        - Install apps to `/Applications/`
+        - Configure auto-start with LaunchAgents
+        - Clean up build artifacts
+      </Step>
+
+      <Step title="Enable auto-hide menu bar">
+        For MenuBarText to work properly, you need to enable auto-hide for your menu bar:
+
+        1. Open **System Settings**
+        2. Navigate to **Desktop & Dock**
+        3. Enable **"Automatically hide and show the menu bar"**
+        
+        <img src="/images/menu-bar-settings.png" alt="Menu bar auto-hide setting" />
+      </Step>
+
+      <Step title="Find the quote bubble icon">
+        Look for the quote bubble icon in your menu bar. This is your MenuBarText controller.
+        
+        <img src="/images/quote-bubble-icon.png" alt="Quote bubble icon in menu bar" />
+      </Step>
+    </Steps>
+
+    <Note>
+      The installation script automatically starts MenuBarTextController, which will launch on every login.
+    </Note>
+  </Tab>
+
+  <Tab title="Build from source">
+    ### Build and compile manually
+
+    If you prefer more control over the installation process, you can build manually.
+
+    <Steps>
+      <Step title="Clone the repository">
+        ```bash
+        git clone https://github.com/yourusername/MenuBarText.git
+        cd MenuBarText
+        ```
+      </Step>
+
+      <Step title="Build MenuBarTextOverlay.app">
+        Create the overlay application bundle:
+
+        ```bash
+        # Create app bundle directories
+        mkdir -p MenuBarTextOverlay.app/Contents/MacOS
+        mkdir -p MenuBarTextOverlay.app/Contents/Resources
+
+        # Compile the Swift source
+        swiftc -o MenuBarTextOverlay.app/Contents/MacOS/MenuBarTextOverlay \
+          src/menubar_text.swift -framework Cocoa
+        ```
+      </Step>
+
+      <Step title="Create Info.plist for overlay">
+        ```bash
+        cat > MenuBarTextOverlay.app/Contents/Info.plist << 'EOF'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleExecutable</key>
+            <string>MenuBarTextOverlay</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.menubartext.overlay</string>
+            <key>CFBundleName</key>
+            <string>MenuBarTextOverlay</string>
+            <key>CFBundleVersion</key>
+            <string>1.0</string>
+            <key>LSUIElement</key>
+            <true/>
+            <key>LSMinimumSystemVersion</key>
+            <string>13.0</string>
+        </dict>
+        </plist>
+        EOF
+        ```
+
+        <Info>
+          The `LSUIElement` key ensures the app runs without a dock icon.
+        </Info>
+      </Step>
+
+      <Step title="Build MenuBarTextController.app">
+        ```bash
+        # Create app bundle directories
+        mkdir -p MenuBarTextController.app/Contents/MacOS
+        mkdir -p MenuBarTextController.app/Contents/Resources
+
+        # Compile the Swift source
+        swiftc -o MenuBarTextController.app/Contents/MacOS/MenuBarTextController \
+          src/menubar_text_controller.swift -framework Cocoa
+        ```
+      </Step>
+
+      <Step title="Create Info.plist for controller">
+        ```bash
+        cat > MenuBarTextController.app/Contents/Info.plist << 'EOF'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleExecutable</key>
+            <string>MenuBarTextController</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.menubartext.controller</string>
+            <key>CFBundleName</key>
+            <string>MenuBarTextController</string>
+            <key>CFBundleVersion</key>
+            <string>1.0</string>
+            <key>LSUIElement</key>
+            <true/>
+            <key>LSMinimumSystemVersion</key>
+            <string>13.0</string>
+        </dict>
+        </plist>
+        EOF
+        ```
+      </Step>
+
+      <Step title="Install to Applications folder">
+        ```bash
+        cp -r MenuBarTextOverlay.app /Applications/
+        cp -r MenuBarTextController.app /Applications/
+        ```
+      </Step>
+
+      <Step title="Configure auto-start">
+        Create a LaunchAgent to start MenuBarTextController on login:
+
+        ```bash
+        cat > ~/Library/LaunchAgents/com.menubartext.controller.plist << 'EOF'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>Label</key>
+            <string>com.menubartext.controller</string>
+            <key>ProgramArguments</key>
+            <array>
+                <string>/Applications/MenuBarTextController.app/Contents/MacOS/MenuBarTextController</string>
+            </array>
+            <key>RunAtLoad</key>
+            <true/>
+            <key>KeepAlive</key>
+            <true/>
+            <key>ProcessType</key>
+            <string>Interactive</string>
+        </dict>
+        </plist>
+        EOF
+        ```
+      </Step>
+
+      <Step title="Load the LaunchAgent">
+        ```bash
+        launchctl load ~/Library/LaunchAgents/com.menubartext.controller.plist
+        ```
+
+        This starts MenuBarTextController immediately and ensures it launches on login.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Verify installation
+
+After installation, verify everything is working:
+
+<CodeGroup>
+```bash Check if apps exist
+ls -la /Applications/MenuBarText*.app
+```
+
+```bash Check LaunchAgent
+ls -la ~/Library/LaunchAgents/com.menubartext.controller.plist
+```
+
+```bash Check if controller is running
+pgrep -f MenuBarTextController
+```
+</CodeGroup>
+
+You should see:
+- Both `.app` bundles in `/Applications/`
+- The LaunchAgent plist file
+- A process ID when checking for the running controller
+
+## Configuration files
+
+MenuBarText stores its settings in your home directory:
+
+| File | Purpose | Default Value |
+|------|---------|---------------|
+| `~/.menubartext_content` | Your custom text | `"Your custom text here"` |
+| `~/.menubartext_position` | Text position (JSON) | `{"x": 20, "y": 5}` |
+| `~/.menubartext_color` | Text color | `"yellow"` |
+
+<Tip>
+  These files are created automatically when you first customize your settings. You can also edit them directly with a text editor.
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Installation script fails with 'macOS version error'">
+    MenuBarText requires macOS 13.0 or later. Check your version:
+    
+    ```bash
+    sw_vers -productVersion
+    ```
+    
+    If you're on an older version, consider upgrading macOS or running MenuBarText on a compatible machine.
+  </Accordion>
+
+  <Accordion title="Text doesn't appear in menu bar area">
+    Make sure your menu bar is set to auto-hide:
+    
+    1. Open System Settings → Desktop & Dock
+    2. Enable "Automatically hide and show the menu bar"
+    3. Restart MenuBarTextController
+    
+    The text only appears when the menu bar is hidden.
+  </Accordion>
+
+  <Accordion title="Quote bubble icon not visible in menu bar">
+    The controller might not be running. Start it manually:
+    
+    ```bash
+    open /Applications/MenuBarTextController.app
+    ```
+    
+    Or reload the LaunchAgent:
+    
+    ```bash
+    launchctl unload ~/Library/LaunchAgents/com.menubartext.controller.plist
+    launchctl load ~/Library/LaunchAgents/com.menubartext.controller.plist
+    ```
+  </Accordion>
+
+  <Accordion title="Permission denied when running install.sh">
+    Make sure the script is executable:
+    
+    ```bash
+    chmod +x install.sh
+    ./install.sh
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Uninstalling
+
+To completely remove MenuBarText from your system:
+
+```bash
+# Stop the LaunchAgent
+launchctl unload ~/Library/LaunchAgents/com.menubartext.controller.plist
+
+# Remove applications
+rm -rf /Applications/MenuBarTextOverlay.app
+rm -rf /Applications/MenuBarTextController.app
+
+# Remove LaunchAgent
+rm ~/Library/LaunchAgents/com.menubartext.controller.plist
+
+# Remove settings (optional)
+rm ~/.menubartext_content ~/.menubartext_position ~/.menubartext_color
+```
+
+<Warning>
+  Removing the settings files will delete your custom text and preferences. Back them up if you plan to reinstall later.
+</Warning>
+
+## Next steps
+
+<Card title="Quickstart guide" icon="rocket" href="/quickstart">
+  Learn how to customize your text, colors, and position
+</Card>

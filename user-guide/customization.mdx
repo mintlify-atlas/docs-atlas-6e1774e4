@@ -1,0 +1,245 @@
+---
+title: Customization
+description: Customize MenuBarText appearance with colors and text options to match your workflow
+---
+
+MenuBarText offers several customization options to help you create the perfect visual experience for your menu bar text.
+
+## Color options
+
+MenuBarText provides four carefully selected colors designed to work with various backgrounds and use cases:
+
+### Available colors
+
+<CardGroup cols={2}>
+  <Card title="🟡 Yellow" icon="circle" color="#FFFF00">
+    **Default bright option**
+    
+    Best for most backgrounds, high visibility, and general use. This is the default color.
+  </Card>
+  
+  <Card title="⚪ White" icon="circle" color="#FFFFFF">
+    **Dark theme friendly**
+    
+    Perfect for dark backgrounds and themes, easy to read without being too harsh.
+  </Card>
+  
+  <Card title="🔴 Red" icon="circle" color="#FF0000">
+    **High visibility**
+    
+    Ideal for important reminders, urgent goals, or anything requiring immediate attention.
+  </Card>
+  
+  <Card title="🟢 Green" icon="circle" color="#00FF00">
+    **Easy on the eyes**
+    
+    Comfortable for extended viewing, great for positive affirmations and calm focus.
+  </Card>
+</CardGroup>
+
+## Changing the text color
+
+Changing colors is a one-click operation:
+
+<Steps>
+  <Step title="Open the color menu">
+    Click the quote bubble icon → **"Text Color"**
+  </Step>
+  
+  <Step title="Select your preferred color">
+    Choose from:
+    - **🟡 Yellow** - Bright and visible
+    - **⚪ White** - Clean and modern
+    - **🔴 Red** - Urgent and attention-grabbing
+    - **🟢 Green** - Calming and positive
+  </Step>
+  
+  <Step title="Color is applied immediately">
+    The overlay will update in real-time to show your selected color.
+  </Step>
+</Steps>
+
+<Note>
+Your color preference is saved to `~/.menubartext_color` and persists across app restarts.
+</Note>
+
+## How color settings are stored
+
+The color selection is saved using a simple file-based system:
+
+```swift
+func saveColor(_ color: String) {
+    let colorFilePath = NSHomeDirectory() + "/.menubartext_color"
+    try? color.write(toFile: colorFilePath, atomically: true, encoding: .utf8)
+}
+```
+
+From `menubar_text_controller.swift:277-280`
+
+The color value is written as plain text: `"yellow"`, `"white"`, `"red"`, or `"green"`.
+
+## Color use cases
+
+Different colors work better for different scenarios:
+
+<AccordionGroup>
+  <Accordion title="Yellow - General motivation">
+    **Best for:**
+    - Daily affirmations
+    - General reminders
+    - Positive quotes
+    - Default use
+    
+    **Why it works:**
+    Yellow is bright and visible without being overwhelming. It works well on most backgrounds and is the classic choice for highlighting important information.
+  </Accordion>
+  
+  <Accordion title="White - Professional and clean">
+    **Best for:**
+    - Dark mode environments
+    - Professional settings
+    - Minimalist aesthetics
+    - Technical reminders
+    
+    **Why it works:**
+    White provides excellent contrast on dark backgrounds and looks clean and professional. Ideal if you're sharing your screen or working in a corporate environment.
+  </Accordion>
+  
+  <Accordion title="Red - Urgent and important">
+    **Best for:**
+    - Deadline reminders
+    - Critical tasks
+    - Stop/warning messages
+    - Breaking bad habits
+    
+    **Why it works:**
+    Red naturally draws attention and signals importance or urgency. Use it when you need a text that demands immediate notice.
+  </Accordion>
+  
+  <Accordion title="Green - Positive and calming">
+    **Best for:**
+    - Health/wellness reminders
+    - Positive reinforcement
+    - Progress tracking
+    - Relaxation cues
+    
+    **Why it works:**
+    Green is associated with growth, positivity, and calm. It's easy on the eyes during long coding sessions and creates a more relaxed atmosphere.
+  </Accordion>
+</AccordionGroup>
+
+## Text customization
+
+Beyond colors, you can customize the actual text content:
+
+### Text length and format
+
+- **Length**: Supports any length from short phrases to longer text
+- **Characters**: Full Unicode support including emojis 🎉
+- **Special characters**: All special characters are supported
+- **Formatting**: Plain text (no bold, italic, or other formatting)
+
+### Text examples
+
+Here are some popular text examples organized by category:
+
+<Tabs>
+  <Tab title="For Developers">
+    ```
+    "Keep coding, you're doing great!"
+    "Code with confidence 💻"
+    "One function at a time"
+    "Debug like a detective 🔍"
+    "Your code will compile. Eventually."
+    "// TODO: Be awesome"
+    ```
+  </Tab>
+  
+  <Tab title="For Students">
+    ```
+    "Study now, celebrate later 📚"
+    "Every expert was once a beginner"
+    "You've got this exam!"
+    "Knowledge is power 🎓"
+    "Focus on progress, not perfection"
+    ```
+  </Tab>
+  
+  <Tab title="For Focus">
+    ```
+    "Deep work mode activated"
+    "Distractions OFF, Focus ON"
+    "One task at a time"
+    "Flow state 🌊"
+    "Silence is golden ✨"
+    ```
+  </Tab>
+  
+  <Tab title="For Wellness">
+    ```
+    "Remember to stretch! 🧘"
+    "Hydrate yourself 💧"
+    "Breathe in, breathe out"
+    "Your health matters"
+    "Take a break every hour"
+    ```
+  </Tab>
+</Tabs>
+
+<Tip>
+Combine emojis with text for better visual impact! The emoji at the beginning or end can make your text more noticeable.
+</Tip>
+
+## Display settings
+
+While you can't customize these directly, here's what MenuBarText uses for text display:
+
+| Setting | Value | Purpose |
+|---------|-------|--------|
+| **Font** | System font | Ensures consistency with macOS |
+| **Size** | 14pt | Optimized for menu bar visibility |
+| **Alignment** | Left-aligned | Natural reading flow |
+| **Spacing** | Proper padding | Prevents text from touching screen edges |
+
+These settings are optimized for readability and consistency with the macOS interface.
+
+## Manual color file editing
+
+<Warning>
+Advanced users only: You can manually edit the color file, but using the menu bar controls is recommended.
+</Warning>
+
+If needed, you can manually set the color by editing the file:
+
+```bash
+# Set color to red
+echo "red" > ~/.menubartext_color
+
+# Valid values: yellow, white, red, green
+```
+
+After editing, restart the overlay for changes to take effect:
+
+1. Stop Text (⌘X)
+2. Start Text (⌘S)
+
+## Combining customizations
+
+For the best experience, consider matching your color and text:
+
+- **Red + Urgent text**: "Deadline: Friday 5 PM! 🚨"
+- **Green + Wellness text**: "Remember to take a break 🌿"
+- **White + Professional text**: "Quarterly review preparation"
+- **Yellow + Motivation text**: "You're doing amazing! ⭐"
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Position adjustment" icon="arrows-up-down-left-right" href="/user-guide/position-adjustment">
+    Learn how to position your text exactly where you want it
+  </Card>
+  
+  <Card title="Basic usage" icon="book-open" href="/user-guide/basic-usage">
+    Review the basic controls and operations
+  </Card>
+</CardGroup>

@@ -1,0 +1,281 @@
+---
+title: Building from source
+description: Learn how to build MenuBarText from source code and understand the build process
+---
+
+MenuBarText is built using Swift and the Cocoa framework. This guide walks you through building the applications from source code.
+
+## Prerequisites
+
+Before building MenuBarText, ensure you have the following:
+
+- macOS 13.0 or later
+- Xcode Command Line Tools installed
+- Basic knowledge of Swift and Cocoa frameworks
+
+### Install Xcode Command Line Tools
+
+```bash
+xcode-select --install
+```
+
+## Clone the repository
+
+<Steps>
+  <Step title="Fork and clone">
+    Fork the repository and clone it to your local machine:
+    
+    ```bash
+    git clone https://github.com/yourusername/MenuBarText.git
+    cd MenuBarText
+    ```
+  </Step>
+  
+  <Step title="Verify source files">
+    Ensure the following source files exist:
+    
+    ```
+    MenuBarText/
+    ├── src/
+    │   ├── menubar_text.swift           # Main overlay app
+    │   └── menubar_text_controller.swift # Menu bar controller
+    ├── install.sh                        # Installation script
+    └── uninstall.sh                      # Uninstallation script
+    ```
+  </Step>
+</Steps>
+
+## Build process
+
+MenuBarText consists of two separate applications that work together:
+
+1. **MenuBarTextOverlay.app** - Displays the actual text in the menu bar area
+2. **MenuBarTextController.app** - Provides the menu bar interface for controls
+
+### Automated build and install
+
+The easiest way to build and install is using the provided installation script:
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+### Manual build process
+
+If you want to understand or customize the build process, here's how to build manually:
+
+<Steps>
+  <Step title="Build MenuBarTextOverlay.app">
+    Create the application bundle structure:
+    
+    ```bash
+    mkdir -p MenuBarTextOverlay.app/Contents/MacOS
+    mkdir -p MenuBarTextOverlay.app/Contents/Resources
+    ```
+    
+    Compile the Swift source code:
+    
+    ```bash
+    swiftc -o MenuBarTextOverlay.app/Contents/MacOS/MenuBarTextOverlay \
+      src/menubar_text.swift \
+      -framework Cocoa
+    ```
+    
+    Create the Info.plist file:
+    
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>CFBundleExecutable</key>
+        <string>MenuBarTextOverlay</string>
+        <key>CFBundleIdentifier</key>
+        <string>com.menubartext.overlay</string>
+        <key>CFBundleName</key>
+        <string>MenuBarTextOverlay</string>
+        <key>CFBundleVersion</key>
+        <string>1.0</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+        <key>LSUIElement</key>
+        <true/>
+        <key>LSMinimumSystemVersion</key>
+        <string>13.0</string>
+    </dict>
+    </plist>
+    ```
+    
+    Save this to `MenuBarTextOverlay.app/Contents/Info.plist`
+  </Step>
+  
+  <Step title="Build MenuBarTextController.app">
+    Create the application bundle structure:
+    
+    ```bash
+    mkdir -p MenuBarTextController.app/Contents/MacOS
+    mkdir -p MenuBarTextController.app/Contents/Resources
+    ```
+    
+    Compile the Swift source code:
+    
+    ```bash
+    swiftc -o MenuBarTextController.app/Contents/MacOS/MenuBarTextController \
+      src/menubar_text_controller.swift \
+      -framework Cocoa
+    ```
+    
+    Create the Info.plist file:
+    
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>CFBundleExecutable</key>
+        <string>MenuBarTextController</string>
+        <key>CFBundleIdentifier</key>
+        <string>com.menubartext.controller</string>
+        <key>CFBundleName</key>
+        <string>MenuBarTextController</string>
+        <key>CFBundleVersion</key>
+        <string>1.0</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+        <key>LSUIElement</key>
+        <true/>
+        <key>LSMinimumSystemVersion</key>
+        <string>13.0</string>
+    </dict>
+    </plist>
+    ```
+    
+    Save this to `MenuBarTextController.app/Contents/Info.plist`
+  </Step>
+  
+  <Step title="Install applications">
+    Copy the built applications to the Applications folder:
+    
+    ```bash
+    cp -r MenuBarTextOverlay.app /Applications/
+    cp -r MenuBarTextController.app /Applications/
+    ```
+  </Step>
+  
+  <Step title="Set up auto-start">
+    Create a Launch Agent plist file at `~/Library/LaunchAgents/com.menubartext.controller.plist`:
+    
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>com.menubartext.controller</string>
+        <key>ProgramArguments</key>
+        <array>
+            <string>/Applications/MenuBarTextController.app/Contents/MacOS/MenuBarTextController</string>
+        </array>
+        <key>RunAtLoad</key>
+        <true/>
+        <key>KeepAlive</key>
+        <true/>
+        <key>ProcessType</key>
+        <string>Interactive</string>
+    </dict>
+    </plist>
+    ```
+    
+    Load the Launch Agent:
+    
+    ```bash
+    launchctl load ~/Library/LaunchAgents/com.menubartext.controller.plist
+    ```
+  </Step>
+</Steps>
+
+## Understanding the app bundle structure
+
+Both applications follow the standard macOS app bundle structure:
+
+```
+MenuBarTextOverlay.app/
+├── Contents/
+│   ├── MacOS/
+│   │   └── MenuBarTextOverlay      # Compiled executable
+│   ├── Resources/                   # (Currently empty)
+│   └── Info.plist                   # App metadata and configuration
+```
+
+### Key Info.plist properties
+
+<Info>
+  The `LSUIElement` key is set to `true` for both applications, which makes them run as background applications without appearing in the Dock or application switcher.
+</Info>
+
+- **CFBundleIdentifier**: Unique identifier for the app (`com.menubartext.overlay` or `com.menubartext.controller`)
+- **LSUIElement**: Set to `true` to run as a background agent
+- **LSMinimumSystemVersion**: Requires macOS 13.0 or later
+
+## Build verification
+
+After building, verify the installation:
+
+<Steps>
+  <Step title="Check installed applications">
+    ```bash
+    ls -la /Applications/MenuBarText*.app
+    ```
+  </Step>
+  
+  <Step title="Verify Launch Agent">
+    ```bash
+    launchctl list | grep menubartext
+    ```
+    
+    You should see `com.menubartext.controller` in the output.
+  </Step>
+  
+  <Step title="Test functionality">
+    Look for the quote bubble icon in your menu bar. Click it to verify the controller is working.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Build fails with "command not found: swiftc"
+
+Install Xcode Command Line Tools:
+
+```bash
+xcode-select --install
+```
+
+### App doesn't appear in menu bar
+
+<Warning>
+  MenuBarText requires your menu bar to be set to auto-hide. Go to System Preferences → Dock & Menu Bar and enable "Automatically hide and show the menu bar".
+</Warning>
+
+### Launch Agent not loading
+
+Unload and reload the Launch Agent:
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.menubartext.controller.plist
+launchctl load ~/Library/LaunchAgents/com.menubartext.controller.plist
+```
+
+## Clean up build artifacts
+
+After installation, you can remove the build artifacts:
+
+```bash
+rm -rf MenuBarTextOverlay.app MenuBarTextController.app
+```
+
+## Next steps
+
+- [Learn how to contribute](/development/contributing)
+- [View the changelog](/development/changelog)
